@@ -45,7 +45,7 @@ interface IMedia {
     /**
      * @notice Mint new media for msg.sender.
      */
-    function mint(MediaData calldata data, IMarket.BidShares calldata bidShares)
+    function mint(MediaData calldata data)
         external;
 
     /**
@@ -54,7 +54,6 @@ interface IMedia {
     function mintWithSig(
         address creator,
         MediaData calldata data,
-        IMarket.BidShares calldata bidShares,
         EIP712Signature calldata sig
     ) external;
 
@@ -69,6 +68,21 @@ interface IMedia {
      * @notice Set the ask on a piece of media
      */
     function setAsk(uint256 tokenId, IMarket.Ask calldata ask) external;
+
+    /**
+    * @notice Set bonus on listing: all items for sale (including the primary item) are bonuses under the hood
+    */
+    function setBonus(uint256 tokenId, IMarket.Bonus calldata bonus) external;
+
+    /**
+    * @notice Set discount on listing
+    */
+    function setDiscount(uint256 tokenId, IMarket.Discount calldata discount) external;
+
+    /**
+    * @notice Set token holding level threshold required to purchase the listing
+    */
+    function setLevelRequirement(uint256 tokenId, IMarket.LevelRequirement calldata levelRequirement) external;
 
     /**
      * @notice Remove the ask on a piece of media

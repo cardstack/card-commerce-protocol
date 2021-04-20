@@ -9,33 +9,46 @@ import {Decimal} from "../Decimal.sol";
  * @title Interface for Zora Protocol's Market
  */
 interface IMarket {
+
     struct Bid {
-        // Amount of the currency being bid
+        // Amount of the SPEND being bid
         uint256 amount;
-        // Address to the ERC20 token being used to bid
-        address currency;
         // Address of the bidder
         address bidder;
         // Address of the recipient
         address recipient;
-        // % of the next sale to award the current owner
-        Decimal.D256 sellOnShare;
     }
 
     struct Ask {
-        // Amount of the currency being asked
+        // Amount of the SPEND being asked
         uint256 amount;
-        // Address to the ERC20 token being asked
-        address currency;
     }
 
-    struct BidShares {
-        // % of sale value that goes to the _previous_ owner of the nft
-        Decimal.D256 prevOwner;
-        // % of sale value that goes to the original creator of the nft
-        Decimal.D256 creator;
-        // % of sale value that goes to the seller (current owner) of the nft
-        Decimal.D256 owner;
+    struct Bonus {
+        // address of the merchant who has set and locked up these bonuses
+        address merchant;
+        // addresses of each token contract corresponding to the bonus
+        address[] tokenAddresses;
+        // items to send out on completion of the listing (amount or tokenId), matching the tokenAddresses index
+        uint[] rewards;
+    }
+
+    struct Discount {
+        // address of the merchant who has set and locked up these bonuses
+        address merchant;
+        // address of the token contract that holds the balance that the merchant wants to give a discount to
+        address tokenContract;
+        // the balance requirements for each discount threshold e.g. 100 or more is a 10% discount. Index matches discounts array
+        uint[] levelThresholds;
+        // the discount to apply as a decimal e.g. total cost * 0.9 for a 10% discount
+        Decimal.D256[] discounts;
+    }
+
+    struct LevelRequirement {
+        // the address of the token contract for which the user must have a balance in
+        address tokenContract;
+        // an amount of fungible tokens or a specific tokenId for an NFT
+        uint requiredBalance;
     }
 
     event BidCreated(uint256 indexed tokenId, Bid bid);
@@ -43,7 +56,6 @@ interface IMarket {
     event BidFinalized(uint256 indexed tokenId, Bid bid);
     event AskCreated(uint256 indexed tokenId, Ask ask);
     event AskRemoved(uint256 indexed tokenId, Ask ask);
-    event BidShareUpdated(uint256 indexed tokenId, BidShares bidShares);
 
     function bidForTokenBidder(uint256 tokenId, address bidder)
         external
@@ -55,32 +67,20 @@ interface IMarket {
         view
         returns (Ask memory);
 
-    function bidSharesForToken(uint256 tokenId)
-        external
-        view
-        returns (BidShares memory);
-
     function isValidBid(uint256 tokenId, uint256 bidAmount)
         external
         view
         returns (bool);
 
-    function isValidBidShares(BidShares calldata bidShares)
-        external
-        pure
-        returns (bool);
-
-    function splitShare(Decimal.D256 calldata sharePercentage, uint256 amount)
-        external
-        pure
-        returns (uint256);
-
     function configure(address mediaContractAddress) external;
 
-    function setBidShares(uint256 tokenId, BidShares calldata bidShares)
-        external;
-
     function setAsk(uint256 tokenId, Ask calldata ask) external;
+
+    function setBonus(uint256 tokenId, Bonus calldata bonus) external;
+
+    function setDiscount(uint256 tokenId, Discount calldata discount) external;
+
+    function setLevelRequirement(uint256 tokenId, LevelRequirement calldata levelRequirement) external;
 
     function removeAsk(uint256 tokenId) external;
 

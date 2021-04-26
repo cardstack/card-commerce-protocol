@@ -1,260 +1,166 @@
-# Zora Media Protocol
+# CardPay-contracts
+The repo containing the smart contracts for the CardPay protocol
 
-This repository contains the core contracts that compose the Zora Media Protocol.
+## Description
+CardPay is a social commerce platform that leverages EVM based blockchains to provide a marketplace for merchants and buyers to purchase digital items using cryptocurrency and fiat. 
 
-The protocol aims to provide a universal value system for media.
+## Contracts
+* `MarketPlace.sol` - the contract that facilitates buying and selling of listings on the platform
+* `Media.sol` - an ERC721 compliant contract that mints the listing NFTs and proxies calls to the market place
 
-Further documentation is available at [zora.engineering](https://zora.engineering)
+## Token standards used
+* `ERC721` for NFTs, including listings and items
+* `ERC20/ERC667` for all fungible tokens including items, SPEND & levels
 
-## Table of Contents
+## Assumptions 
+* These contracts will run on the xDAI chain, each asset used may or may not be pegged to a mainnet balance 
+* Prices are denominated in SPEND, a fungible token  
+* All user funds will be held in gnosis safes 
+* Gnosis safe infrastructure handles all the relaying RE gas fees 
+* the NFTs minted for listings will be contained in the CardPay NFT contract
+* Each listing corresponds to a unique NFT but can represent fungibles and/or other NFT(s) 
+* Listings are for digital products only, no physical redemption 
+* Items set by the Merchant must be locked up in the contract to prevent double spending
+* Items are automatically swapped on purchase
+* Merchant reimburses the buyers gas fee if their bid is successful 
+* All NFTs are ERC721
+* Listings do not expire
+* “levels“ are set inside the fungible token itself so as to ensure a single source of truth set by the contract admin 
+* Listing prices can be changed while on the market 
+* Merchants can accept any bid they like, even if it is below their reserve price 
+* We are basing off the Zora protocol 
 
-- [Whitepaper](#whitepaper)
-- [Architecture](#architecture)
-  - [Mint](#mint)
-  - [Set Bid](#set-bid)
-  - [Remove Bid](#remove-bid)
-  - [Transfer](#transfer)
-  - [Burn](#burn)
-  - [Set Ask](#set-ask)
-  - [Accept Bid](#accept-bid)
-  - [Approve](#approve)
-  - [Update Token and Media URI](#update-token-and-media-uri)
-  - [Permit](#permit)
-  - [Mint with Signature](#mint-with-signature)
-- [Local Development](#Local-Development)
-  - [Install Dependencies](#install-dependencies)
-  - [Compile Contracts](#compile-contracts)
-  - [Start a Local Blockchain](#start-a-local-blockchain)
-  - [Run Tests](#run-tests)
+## Architecture 
+This protocol extends the ERC721 standard with each listing represented by an NFT. The listing NFT itself only represents the item(s) being sold. 
 
-## Whitepaper
+![overview](./diagrams/protocol.png)
 
-The whitepaper is available at [zora.engineering](https://zora.engineering/whitepaper)
-
-## Architecture
-
-This protocol is an extension of the ERC-721 NFT standard, intended to
-provide a unified pool of liquidity in the form of bids in a market for each NFT.
-This protocol refers to NFTs as `Media`.
-
-The protocol's roles and methods interact with the core contracts as follows:
-![Architecture Diagram](./architecture.png)
-
-The following structs are defined in the contract and used as parameters for some methods:
-
+The following structs are used in the marketplace to facilitate the buying and selling of items on the platform:
 ```solidity
-// Decimal.D256
-struct D256 {
-  uint256 value;
-}
-
 struct Bid {
-  // Amount of the currency being bid
-  uint256 amount;
-  // Address to the ERC20 token being used to bid
-  address currency;
-  // Address of the bidder
-  address bidder;
-  // Address of the recipient
-  address recipient;
-  // % of the next sale to award the previous owner
-  Decimal.D256 sellOnShare;
+    // Amount of the SPEND being bid
+    uint256 amount;
+    // token contract for bid
+    address token; 
+    // Address of the bidder
+    address bidder;
+    // Address of the recipient
+    address recipient;
 }
 
 struct Ask {
-  // Amount of the currency being asked
-  uint256 amount;
-  // Address to the ERC20 token being asked
-  address currency;
-  // % of the next sale to award the previous owner
-  Decimal.D256 sellOnShare;
+    // Amount of the SPEND being asked, must be in a whitelisted currency 
+    uint256 amount;
 }
 
-struct BidShares {
-  // % of sale value that goes to the _previous_ owner of the nft
-  Decimal.D256 prevOwner;
-  // % of sale value that goes to the original creator of the nft
-  Decimal.D256 creator;
-  // % of sale value that goes to the seller (current owner) of the nft
-  Decimal.D256 owner;
+struct Items { 
+    // address of the merchant who has set and locked up these items
+    address merchant;
+    // addresses of each token contract corresponding to the item
+    address[] tokenAddresses;
+    // items to send out on completion of the listing (amount or tokenId), matching the tokenAddresses index
+    uint[] amounts;
 }
 
-struct MediaData {
-  // A valid URI of the content represented by this token
-  string tokenURI;
-  // A valid URI of the metadata associated with this token
-  string metadataURI;
-  // A SHA256 hash of the content pointed to by tokenURI
-  bytes32 contentHash;
-  // A SHA256 hash of the content pointed to by metadataURI
-  bytes32 metadataHash;
+struct Discount {
+    // address of the merchant who has set the discount based on a level
+    address merchant;
+    // address of the token contract that holds the balance that the merchant wants to give a discount to
+    address tokenContract;
+    // the level labels corresponding to a discount below. Calls the token contract to get the level string and match it accordingly 
+    string[] levels;
+    // the discount to apply as a decimal e.g. total cost * 0.9 for a 10% discount
+    Decimal.D256[] discounts;
 }
 
-struct EIP712Signature {
-  uint256 deadline;
-  uint8 v;
-  bytes32 r;
-  bytes32 s;
+struct LevelRequirement {
+    // the address of the token contract for which the user must have a balance in
+    address tokenContract;
+    // call token contract and get the required level to make the purchase e.g. "super fan"
+    string requiredLevel; 
 }
 
+// Contained in the fungible token contract itself
+struct Levels {
+    // labels matching each threshold, e.g. 100 = power user
+    string[] labels;
+    // thresholds for each required level matching a label 
+    uint[] thresholds;
+}
 ```
 
 ### Mint
+A merchant mints an NFT that represents the listing itself (this NFT is not the item(s) the merchant is selling, only an order id).
 
-At any time, a creator may mint a new piece of media. When a piece is minted, the new media is transferred to the creator and a market is formed.
+### Bid
+Anyone can place a bid matching the listing NFT. By placing a bid, the bidder must deposit the amount denominated in SPEND. This protocol only accepts whitelisted tokens that have a corresponding rate in SPEND. 
 
-| **Name**    | **Type**    | **Description**                                                                         |
-| ----------- | ----------- | --------------------------------------------------------------------------------------- |
-| `data`      | `MediaData` | The data represented by this media, including SHA256 hashes for future integrity checks |
-| `bidShares` | `BidShares` | The percentage of bid fees that should be perpetually rewarded to the creator.          |
-
-![Mint process flow diagram](./mint.png)
-
-### Set Bid
-
-Anyone may place a bid on a minted token. By placing a bid, the bidder deposits the currency of their choosing into
-the market contract. Any valid ERC-20 currencies can be used to bid. Note that we strongly recommend that bidders do not bid using a currency that can be rebased, such as [AMPL](https://www.ampleforth.org/), [YAM](https://yam.finance/), or [BASED](https://based.money), as funds can become locked in the Market if the token is rebased.
-
-| **Name**  | **Type**  | **Description**                        |
-| --------- | --------- | -------------------------------------- |
-| `tokenId` | `uint256` | The tokenID for the media being bid on |
-| `bid`     | `Bid`     | The bid to be placed                   |
-
-![Set Bid process flow diagram](./setBid.png)
-
-### Remove Bid
-
-Once a bid has been set by a bidder, it can be removed. In order to remove a bid from a piece of media, the bidder simply specifies the piece of media that they wish to remove their bid from.
-Note from the process flow diagram above for setting a bid that only one bid can be set a time per bidder per piece of media.
-
-| **Name**  | **Type**  | **Description**                                      |
-| --------- | --------- | ---------------------------------------------------- |
-| `tokenId` | `uint256` | The tokenID for the media who's bid is being removed |
-
-![Remove Bid process flow diagram](./removeBid.png)
+### Remove bid 
+A buyer can remove their bid if they change their mind, the listing is burned or another bid is successful. This will release the deposited funds back to the buyer. 
 
 ### Transfer
-
-Any media owner is able to transfer their media to an address of their choosing. This does not alter the market for the media, except to remove the Ask on the piece, if it is present. Its implementation from the standard ERC721 standard is unchanged in this protocol.
+Blocked. 
 
 ### Burn
+A merchant can choose to burn their listing NFT. This will refund the deposited items but the metadata and tokenId will be retained.
 
-This protocol allows for media to be burned, if and only if the owner of the media is also the creator. When burned, the `tokenURI` and `metadataURI` of the media are not removed. This means that even though the market becomes inactive, the media is still viewable. Effectively, the media becomes read-only.
-Any bids that were placed on a piece prior to it being burned can still be removed.
+### Ask
+A merchant can set an ask at any time. This will allow bids that match the criteria to be automatically approved. A merchant is free to modify this ask at any time. 
 
-| **Name**  | **Type**  | **Description**                   |
-| --------- | --------- | --------------------------------- |
-| `tokenId` | `uint256` | The tokenID for the media to burn |
+TODO figure out how we can fulfil an ask requirement with SPEND as the yardstick e.g. merchant accepts 100 SPEND for an item which can be payable in any currency so long as it matches the SPEND denomination at the time. Note: we need to be able to get the exact rate on purchase tx. 
 
-![Burn process flow diagram](./burn.png)
+### Accept bid
+The merchant can accept any bid made by a buyer even if it doesn't meet their reserve price as set in the ask.
 
-### Set Ask
+### Approve 
+The merchant can grant approval to any other address for the listing. This follows the standard ERC721 approve functionality and allows the spender to control the listing. 
 
-At any time, an owner may set an Ask on their media. The ask serves to automatically fulfill a bid if it satisfies the parameters of the ask. This allows collectors to optionally buy a piece outright, without waiting for the owner to explicitly accept their bid.
+### Metadata for listing
+A merchant can set metadata to their listing NFT. This should match a product schema defined here: https://schema.org/ProductModel 
 
-| **Name**  | **Type**  | **Description**           |
-| --------- | --------- | ------------------------- |
-| `tokenId` | `uint256` | The tokenID for the media |
-| `ask`     | `Ask`     | The ask to be set         |
+### Set item(s)
+Each listing NFT on this platform is not the item(s) itself. Instead the merchant locks up these assets as items for the buyer to purchase. Each listing must have at least one item. 
 
-![Set Ask process flow diagram](./setAsk.png)
+### Set level requirement
+A merchant can set a level requirement for a listing at any time. A level corresponds to a balance of a particular token e.g. a fan token. An example of a level requirement could be that the merchant requires you hold at least 10 FAN tokens to make a bid.  
 
-### Accept Bid
+### Set a discount based on a level
+A merchant can set a discount based on the buyers level in a particular token. E.g. 10% off if you own at least 10 FAN tokens. This discount will be applied on the bid being accepted. TODO what if the merchant changes the discount later? 
 
-When an owner sees a satisfactory bid, they can accept it and transfer the ownership of the piece to the bidder's recipient. The bid's funds are split according to the percentages defined in the piece's bid shares.
-Note that bids can have a sell-on fee. This fee is to entitle the seller to a piece of the next sale of the media. For example, suppose someone owns a piece with a limited means of promoting it. In this case, it may be favorable to accept a bid from a highly regarded platform for a lower initial capital, but high potential resale fee.
-Since the sell-on fee can be easily avoided by bidders with ill intent, it's suggested that owners only accept sell-on fee offers from reputable buyers.
+## Merchant flows
+* Merchant chooses the items they wish to sell. These tokens can be either fungible or non fungible (required)
+* Merchant sets a price with a reserve in SPEND (required)
+* Merchant can set a discount, which is applied depending on the buyers level of fungible token holdings e.g. hold 10 RAC, get a 10% discount  (optional)
+* Merchant can set a required level to make a purchase, e.g. buyer must have reached VIP tier 1 (optional)
+* An NFT token is minted representing the listing with a unique identifier (required)
+* After listing, the Merchant can remove the listing, modify the discount based on the same levels, change the level requirement to buy or change it’s reserve price
+* Merchant can accept any bid 
 
-| **Name**  | **Type**  | **Description**           |
-| --------- | --------- | ------------------------- |
-| `tokenId` | `uint256` | The tokenID for the media |
-| `bid`     | `Bid`     | The bid to accept         |
+Merchant listing flow:
 
-![Accept Bid process flow diagram](./acceptBid.png)
+![merchant listing flow](./diagrams/merchant-listing-flow.png)
 
-### Approve
+Merchant modify listing flow:
 
-At any time, the owner of a piece of media is able to approve another address to act on its behalf.
-This implementation is unchanged from the ERC-721 standard. However, approved addresses are now also able to accept bids,
-set asks, update URIs, and burn media (provided the owner is the creator, as above).
+![merchant modify listing flow](./diagrams/merchant-modify-listing.png)
 
-### Update Token and Media URI
+Merchant bid flow:
 
-Although this protocol is designed to maintain perpetual markets for media, data availability of that media is considered
-out of scope. However, in the event that the URIs that point to the data must be changed, this protocol offers the ability to update them.
-Recall that when minting tokens, sha256 hashes of the content and metadata are provided for integrity checks. As a result, anyone is able to
-check the integrity of the media if the URIs change.
+![merchant bid flow](./diagrams/merchant-bid-flow.png)
 
-This protocol deviates from the ERC-721 in that the `tokenURI` does **not** point to a valid ERC721 Metadata JSON Schema as defined in the EIP.
-In order to support integrity checks when updating the tokenURIs, the content and metadata of a piece of media are split into `tokenURI` and `metadataURI`,
-respectively. This split effectively allows for the reconfiguration of the URIs of both the content and metadata, while preserving integrity checks.
+## Buyer flows
+* Buyer makes a bid or clicks buy now (must have the required balance)
+* If buyer is eligible for a discount, this discount is applied on purchase
+* If the buyer does not meet the level requirement for the purchase, the transaction will revert
+* If successful, the buyer swaps their tokens for the item(s)
 
-#### Metadata JSON schema
+Buyer bid flow:
 
-In order to enable anyone to use this protocol as they see fit, there is no single metadata JSON schema that is used for this protocol.
-However, it is strongly recommended that developers submit a valid [JSON schema](https://json-schema.org/) to the
-[Media Metadata Schemas Repository](https://github.com/ourzora/media-metadata-schemas) to allow anyone to support custom metadata.
-The only **required** key of the JSON metadata is `version`, which is a string in the format of `<name-calVersion>` (e.g. `zora-20210101`).
-This key can be used by implementing platforms to determine which metadata schemas to support.
+![buyer bid flow](./diagrams/buyer-bid-flow.png)
 
-### Permit
+Buyer create bid flow:
 
-In order to provide support for third parties to interact with this protocol on a user's behalf, the EIP-712 standard for signing typed data structures is supported.
-The protocol offers a `permit` method loosely based off of EIP-2612, with some adjustments made to support NFTs rather than ERC-20 currencies. The `Permit` EIP-712 data structure is as follows:
+![buyer create bid flow](./diagrams/buyer-create-bid-flow.png)
 
-```typescript
-{
-  Permit: [
-    { name: 'spender', type: 'address' },
-    { name: 'tokenId', type: 'uint256' },
-    { name: 'nonce', type: 'uint256' },
-    { name: 'deadline', type: 'uint256' },
-  ];
-}
-```
-
-If the permit is applied, the specified `spender` is set as approved for the signer. Note that the `spender` will stay approved until the approval is revoked.
-
-### Mint With Signature
-
-If the media has yet to be minted yet, creators are able to permit a third party to mint on their behalf by signing a `MintWithSig` object. The structure is as follows:
-
-```typescript
-{
-  MintWithSig: [
-    { name: 'tokenURI', type: 'string' },
-    { name: 'metadataURI', type: 'string' },
-    { name: 'creatorShare', type: 'uint256' },
-    { name: 'nonce', type: 'uint256' },
-    { name: 'deadline', type: 'uint256' },
-  ];
-}
-```
-
-## Local Development
-
-The following assumes `node >= 12`
-
-### Install Dependencies
-
-```shell script
-yarn
-```
-
-### Compile Contracts
-
-```shell script
-yarn build
-```
-
-### Start a Local Blockchain
-
-```shell script
-yarn chain
-```
-
-### Run Tests
-
-```shell script
-yarn test
-```
+## Attribution 
+This repo is based from the [Zora protocol](https://github.com/ourzora/core)

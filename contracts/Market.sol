@@ -336,7 +336,7 @@ contract Market is IMarket {
         );
         // Transfer bid share to creator of media
         token.safeTransfer(
-            Media(mediaContract).tokenCreators(tokenId),
+            Media(mediaContract).merchants(tokenId),
             splitShare(bidShares.creator, bid.amount)
         );
         // Transfer bid share to previous owner of media (if applicable)

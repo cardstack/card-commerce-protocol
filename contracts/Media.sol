@@ -36,11 +36,11 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     // Mapping from token to previous owner of the token
     mapping(uint256 => address) public previousTokenOwners;
 
-    // Mapping from token id to creator address
-    mapping(uint256 => address) public tokenCreators;
+    // Mapping from token id to merchant address
+    mapping(uint256 => address) public merchants;
 
     // Mapping from creator address to their (enumerable) set of created tokens
-    mapping(address => EnumerableSet.UintSet) private _creatorTokens;
+    mapping(address => EnumerableSet.UintSet) private _listingIds;
 
     // Mapping from token id to sha256 hash of content
     mapping(uint256 => bytes32) public tokenContentHashes;
@@ -218,7 +218,6 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     function mintWithSig(
         address creator,
         MediaData memory data,
-        IMarket.BidShares memory bidShares,
         EIP712Signature memory sig
     ) public override nonReentrant {
         require(
@@ -343,7 +342,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         address owner = ownerOf(tokenId);
 
         require(
-            tokenCreators[tokenId] == owner,
+            merchants[tokenId] == owner,
             "Media: owner is not creator of media"
         );
 
@@ -466,9 +465,8 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      */
     function _mintForCreator(
         address creator,
-        MediaData memory data,
-        IMarket.BidShares memory bidShares
-    ) internal onlyValidURI(data.tokenURI) onlyValidURI(data.metadataURI) {
+        MediaData memory data
+    ) internal onlyValidURI(data.listingURI) onlyValidURI(data.metadataURI) {
         require(data.contentHash != 0, "Media: content hash must be non-zero");
         require(
             _contentHashes[data.contentHash] == false,
@@ -486,13 +484,12 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         _setTokenContentHash(tokenId, data.contentHash);
         _setTokenMetadataHash(tokenId, data.metadataHash);
         _setTokenMetadataURI(tokenId, data.metadataURI);
-        _setTokenURI(tokenId, data.tokenURI);
-        _creatorTokens[creator].add(tokenId);
+        _setTokenURI(tokenId, data.listingURI);
+        _listingIds[creator].add(tokenId);
         _contentHashes[data.contentHash] = true;
 
-        tokenCreators[tokenId] = creator;
+        merchants[tokenId] = creator;
         previousTokenOwners[tokenId] = creator;
-        IMarket(marketContract).setBidShares(tokenId, bidShares);
     }
 
     function _setTokenContentHash(uint256 tokenId, bytes32 contentHash)

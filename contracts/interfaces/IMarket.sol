@@ -20,11 +20,11 @@ interface IMarket {
     }
 
     struct Ask {
-        // Amount of the SPEND being asked
+        // Amount of the SPEND being asked, convert the bid value to SPEND in real time and satisfy the condition if >= the amount specified
         uint256 amount;
     }
 
-    struct Bonus {
+    struct Items {
         // address of the merchant who has set and locked up these bonuses
         address merchant;
         // addresses of each token contract corresponding to the bonus
@@ -45,7 +45,7 @@ interface IMarket {
     }
 
     struct LevelRequirement {
-        // the address of the token contract for which the user must have a balance in
+        // the address of the token contract for which the user must have a balance in (should be contained in the token logic itself)
         address tokenContract;
         // an amount of fungible tokens or a specific tokenId for an NFT
         uint requiredBalance;
@@ -76,7 +76,7 @@ interface IMarket {
 
     function setAsk(uint256 tokenId, Ask calldata ask) external;
 
-    function setBonus(uint256 tokenId, Bonus calldata bonus) external;
+    function setBonus(uint256 tokenId, Items calldata bonus) external;
 
     function setDiscount(uint256 tokenId, Discount calldata discount) external;
 

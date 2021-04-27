@@ -16,9 +16,10 @@ interface IMedia {
         bytes32 s;
     }
 
+    //TODO modify to fit some sort of product detail schema
     struct MediaData {
         // A valid URI of the content represented by this token
-        string tokenURI;
+        string listingURI;
         // A valid URI of the metadata associated with this token
         string metadataURI;
         // A SHA256 hash of the content pointed to by tokenURI
@@ -70,9 +71,9 @@ interface IMedia {
     function setAsk(uint256 tokenId, IMarket.Ask calldata ask) external;
 
     /**
-    * @notice Set bonus on listing: all items for sale (including the primary item) are bonuses under the hood
+    * @notice Set items in listing
     */
-    function setBonus(uint256 tokenId, IMarket.Bonus calldata bonus) external;
+    function setItems(uint256 tokenId, Items.Bonus calldata bonus) external;
 
     /**
     * @notice Set discount on listing

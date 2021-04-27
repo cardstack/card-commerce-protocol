@@ -56,6 +56,9 @@ interface IMarket {
     event BidFinalized(uint256 indexed tokenId, Bid bid);
     event AskCreated(uint256 indexed tokenId, Ask ask);
     event AskRemoved(uint256 indexed tokenId, Ask ask);
+    event ItemsSet(uint256 indexed tokenId, Items items);
+    event DiscountSet(uint256 indexed tokenId, Discount discount);
+    event LevelRequirementSet(uint256 indexed tokenId, LevelRequirement levelRequirement);
 
     function bidForTokenBidder(uint256 tokenId, address bidder)
         external
@@ -76,7 +79,7 @@ interface IMarket {
 
     function setAsk(uint256 tokenId, Ask calldata ask) external;
 
-    function setBonus(uint256 tokenId, Items calldata bonus) external;
+    function setItems(uint256 tokenId, Items calldata items) external;
 
     function setDiscount(uint256 tokenId, Discount calldata discount) external;
 

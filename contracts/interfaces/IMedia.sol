@@ -73,12 +73,17 @@ interface IMedia {
     /**
     * @notice Set items in listing
     */
-    function setItems(uint256 tokenId, Items.Bonus calldata bonus) external;
+    function setItems(uint256 tokenId, IMarket.Items calldata bonus) external;
 
     /**
-    * @notice Set discount on listing
+    * @notice set a discount based on a particular level
     */
-    function setDiscount(uint256 tokenId, IMarket.Discount calldata discount) external;
+    function setDiscountBasedOnLevel(uint256 tokenId, IMarket.Discount) external;
+
+    /**
+    * @notice set a level requirement for the buyers e.g. must own 100 FAN to buy
+    */
+    function setLevelRequirement(uint256 tokenId, IMarket.LevelRequirement) external;
 
     /**
     * @notice Set token holding level threshold required to purchase the listing

@@ -204,12 +204,12 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     /**
      * @notice see IMedia
      */
-    function mint(MediaData memory data, IMarket.BidShares memory bidShares)
+    function mint(MediaData memory data)
         public
         override
         nonReentrant
     {
-        _mintForCreator(msg.sender, data, bidShares);
+        _mintForCreator(msg.sender, data);
     }
 
     /**
@@ -237,7 +237,6 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
                             MINT_WITH_SIG_TYPEHASH,
                             data.contentHash,
                             data.metadataHash,
-                            bidShares.creator.value,
                             mintWithSigNonces[creator]++,
                             sig.deadline
                         )
@@ -252,7 +251,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
             "Media: Signature invalid"
         );
 
-        _mintForCreator(recoveredAddress, data, bidShares);
+        _mintForCreator(recoveredAddress, data);
     }
 
     /**
@@ -326,6 +325,42 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         onlyApprovedOrOwner(msg.sender, tokenId)
     {
         IMarket(marketContract).acceptBid(tokenId, bid);
+    }
+
+    /**
+     * @notice see IMedia
+     */
+    function setDiscountBasedOnLevel(uint256 tokenId, IMarket.Discount memory discount)
+        public
+        override
+        nonReentrant
+        onlyApprovedOrOwner(msg.sender, tokenId)
+    {
+        IMarket(marketContract).setDiscountBasedOnLevel(tokenId, discount);
+    }
+
+    /**
+     * @notice see IMedia
+     */
+    function setItems(uint256 tokenId, IMarket.Items memory items)
+        public
+        override
+        nonReentrant
+        onlyApprovedOrOwner(msg.sender, tokenId)
+    {
+        IMarket(marketContract).setItems(tokenId, items);
+    }
+
+    /**
+     * @notice see IMedia
+     */
+    function setLevelRequirement(uint256 tokenId, IMarket.LevelRequirement memory levelRequirement)
+        public
+        override
+        nonReentrant
+        onlyApprovedOrOwner(msg.sender, tokenId)
+    {
+        IMarket(marketContract).setLevelRequirement(tokenId, levelRequirement);
     }
 
     /**

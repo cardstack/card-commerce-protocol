@@ -32,9 +32,6 @@ contract Market is IMarket {
     // Mapping from token to mapping from bidder to bid
     mapping(uint256 => mapping(address => Bid)) private _tokenBidders;
 
-    // Mapping from token to the bid shares for the token
-    mapping(uint256 => BidShares) private _bidShares;
-
     // Mapping from token to the current ask for the token
     mapping(uint256 => Ask) private _tokenAsks;
 
@@ -73,15 +70,6 @@ contract Market is IMarket {
         return _tokenAsks[tokenId];
     }
 
-    function bidSharesForToken(uint256 tokenId)
-        public
-        view
-        override
-        returns (BidShares memory)
-    {
-        return _bidShares[tokenId];
-    }
-
     /**
      * @notice Validates that the bid is valid by ensuring that the bid amount can be split perfectly into all the bid shares.
      *  We do this by comparing the sum of the individual share values with the amount and ensuring they are equal. Because
@@ -94,46 +82,9 @@ contract Market is IMarket {
         override
         returns (bool)
     {
-        BidShares memory bidShares = bidSharesForToken(tokenId);
-        require(
-            isValidBidShares(bidShares),
-            "Market: Invalid bid shares for token"
-        );
-        return
-            bidAmount != 0 &&
-            (bidAmount ==
-                splitShare(bidShares.creator, bidAmount)
-                    .add(splitShare(bidShares.prevOwner, bidAmount))
-                    .add(splitShare(bidShares.owner, bidAmount)));
+        return bidAmount != 0;
     }
 
-    /**
-     * @notice Validates that the provided bid shares sum to 100
-     */
-    function isValidBidShares(BidShares memory bidShares)
-        public
-        pure
-        override
-        returns (bool)
-    {
-        return
-            bidShares.creator.value.add(bidShares.owner.value).add(
-                bidShares.prevOwner.value
-            ) == uint256(100).mul(Decimal.BASE);
-    }
-
-    /**
-     * @notice return a % of the specified amount. This function is used to split a bid into shares
-     * for a media's shareholders.
-     */
-    function splitShare(Decimal.D256 memory sharePercentage, uint256 amount)
-        public
-        pure
-        override
-        returns (uint256)
-    {
-        return Decimal.mul(amount, sharePercentage).div(100);
-    }
 
     /* ****************
      * Public Functions
@@ -157,23 +108,6 @@ contract Market is IMarket {
         );
 
         mediaContract = mediaContractAddress;
-    }
-
-    /**
-     * @notice Sets bid shares for a particular tokenId. These bid shares must
-     * sum to 100.
-     */
-    function setBidShares(uint256 tokenId, BidShares memory bidShares)
-        public
-        override
-        onlyMediaCaller
-    {
-        require(
-            isValidBidShares(bidShares),
-            "Market: Invalid bid shares, must sum to 100"
-        );
-        _bidShares[tokenId] = bidShares;
-        emit BidShareUpdated(tokenId, bidShares);
     }
 
     /**
@@ -212,12 +146,6 @@ contract Market is IMarket {
         Bid memory bid,
         address spender
     ) public override onlyMediaCaller {
-        BidShares memory bidShares = _bidShares[tokenId];
-        require(
-            bidShares.creator.value.add(bid.sellOnShare.value) <=
-                uint256(100).mul(Decimal.BASE),
-            "Market: Sell on fee invalid for share splitting"
-        );
         require(bid.bidder != address(0), "Market: bidder cannot be 0 address");
         require(bid.amount != 0, "Market: cannot bid amount of 0");
         require(
@@ -248,8 +176,7 @@ contract Market is IMarket {
             afterBalance.sub(beforeBalance),
             bid.currency,
             bid.bidder,
-            bid.recipient,
-            bid.sellOnShare
+            bid.recipient
         );
         emit BidCreated(tokenId, bid);
 
@@ -306,7 +233,6 @@ contract Market is IMarket {
         require(
             bid.amount == expectedBid.amount &&
                 bid.currency == expectedBid.currency &&
-                bid.sellOnShare.value == expectedBid.sellOnShare.value &&
                 bid.recipient == expectedBid.recipient,
             "Market: Unexpected bid found."
         );
@@ -318,6 +244,30 @@ contract Market is IMarket {
         _finalizeNFTTransfer(tokenId, bid.bidder);
     }
 
+    function setDiscountBasedOnLevel(uint256 tokenId, Discount calldata discount)
+        external
+        override
+        onlyMediaCaller
+    {
+        // TODO implement
+    }
+
+    function setItems(uint256 tokenId, Items calldata items)
+        external
+        override
+        onlyMediaCaller
+    {
+        // TODO implement
+    }
+
+    function setLevelRequirement(uint256 tokenId, LevelRequirement calldata levelRequirement)
+        external
+        override
+        onlyMediaCaller
+    {
+        // TODO implement
+    }
+
     /**
      * @notice Given a token ID and a bidder, this method transfers the value of
      * the bid to the shareholders. It also transfers the ownership of the media
@@ -325,44 +275,15 @@ contract Market is IMarket {
      */
     function _finalizeNFTTransfer(uint256 tokenId, address bidder) private {
         Bid memory bid = _tokenBidders[tokenId][bidder];
-        BidShares storage bidShares = _bidShares[tokenId];
 
         IERC20 token = IERC20(bid.currency);
-
-        // Transfer bid share to owner of media
-        token.safeTransfer(
-            IERC721(mediaContract).ownerOf(tokenId),
-            splitShare(bidShares.owner, bid.amount)
-        );
-        // Transfer bid share to creator of media
-        token.safeTransfer(
-            Media(mediaContract).merchants(tokenId),
-            splitShare(bidShares.creator, bid.amount)
-        );
-        // Transfer bid share to previous owner of media (if applicable)
-        token.safeTransfer(
-            Media(mediaContract).previousTokenOwners(tokenId),
-            splitShare(bidShares.prevOwner, bid.amount)
-        );
 
         // Transfer media to bid recipient
         Media(mediaContract).auctionTransfer(tokenId, bid.recipient);
 
-        // Calculate the bid share for the new owner,
-        // equal to 100 - creatorShare - sellOnShare
-        bidShares.owner = Decimal.D256(
-            uint256(100)
-                .mul(Decimal.BASE)
-                .sub(_bidShares[tokenId].creator.value)
-                .sub(bid.sellOnShare.value)
-        );
-        // Set the previous owner share to the accepted bid's sell-on fee
-        bidShares.prevOwner = bid.sellOnShare;
-
         // Remove the accepted bid
         delete _tokenBidders[tokenId][bidder];
 
-        emit BidShareUpdated(tokenId, bidShares);
         emit BidFinalized(tokenId, bid);
     }
 }

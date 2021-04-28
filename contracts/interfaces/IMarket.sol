@@ -13,6 +13,8 @@ interface IMarket {
     struct Bid {
         // Amount of the SPEND being bid
         uint256 amount;
+        // the currency used in the bid, must have a SPEND value
+        address currency;
         // Address of the bidder
         address bidder;
         // Address of the recipient
@@ -22,6 +24,8 @@ interface IMarket {
     struct Ask {
         // Amount of the SPEND being asked, convert the bid value to SPEND in real time and satisfy the condition if >= the amount specified
         uint256 amount;
+        // the currency the merchant plans to receive on their end, must have a SPEND value
+        address currency;
     }
 
     struct Items {
@@ -81,7 +85,7 @@ interface IMarket {
 
     function setItems(uint256 tokenId, Items calldata items) external;
 
-    function setDiscount(uint256 tokenId, Discount calldata discount) external;
+    function setDiscountBasedOnLevel(uint256 tokenId, Discount calldata discount) external;
 
     function setLevelRequirement(uint256 tokenId, LevelRequirement calldata levelRequirement) external;
 

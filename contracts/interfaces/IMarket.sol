@@ -9,7 +9,6 @@ import {Decimal} from "../Decimal.sol";
  * @title Interface for Zora Protocol's Market
  */
 interface IMarket {
-
     struct Bid {
         // Amount of the SPEND being bid
         uint256 amount;
@@ -34,7 +33,7 @@ interface IMarket {
         // addresses of each token contract corresponding to the bonus
         address[] tokenAddresses;
         // items to send out on completion of the listing (amount or tokenId), matching the tokenAddresses index
-        uint[] rewards;
+        uint256[] amounts;
     }
 
     struct Discount {
@@ -42,8 +41,8 @@ interface IMarket {
         address merchant;
         // address of the token contract that holds the balance that the merchant wants to give a discount to
         address tokenContract;
-        // the balance requirements for each discount threshold e.g. 100 or more is a 10% discount. Index matches discounts array
-        uint[] levelThresholds;
+        // the name of the level tiers e.g. "superfan" that is then checked against the token contract itself
+        string[] levelThresholds;
         // the discount to apply as a decimal e.g. total cost * 0.9 for a 10% discount
         Decimal.D256[] discounts;
     }
@@ -52,7 +51,7 @@ interface IMarket {
         // the address of the token contract for which the user must have a balance in (should be contained in the token logic itself)
         address tokenContract;
         // an amount of fungible tokens or a specific tokenId for an NFT
-        uint requiredBalance;
+        uint256 requiredBalance;
     }
 
     event BidCreated(uint256 indexed tokenId, Bid bid);
@@ -62,7 +61,10 @@ interface IMarket {
     event AskRemoved(uint256 indexed tokenId, Ask ask);
     event ItemsSet(uint256 indexed tokenId, Items items);
     event DiscountSet(uint256 indexed tokenId, Discount discount);
-    event LevelRequirementSet(uint256 indexed tokenId, LevelRequirement levelRequirement);
+    event LevelRequirementSet(
+        uint256 indexed tokenId,
+        LevelRequirement levelRequirement
+    );
 
     function bidForTokenBidder(uint256 tokenId, address bidder)
         external
@@ -85,9 +87,15 @@ interface IMarket {
 
     function setItems(uint256 tokenId, Items calldata items) external;
 
-    function setDiscountBasedOnLevel(uint256 tokenId, Discount calldata discount) external;
+    function setDiscountBasedOnLevel(
+        uint256 tokenId,
+        Discount calldata discount
+    ) external;
 
-    function setLevelRequirement(uint256 tokenId, LevelRequirement calldata levelRequirement) external;
+    function setLevelRequirement(
+        uint256 tokenId,
+        LevelRequirement calldata levelRequirement
+    ) external;
 
     function removeAsk(uint256 tokenId) external;
 

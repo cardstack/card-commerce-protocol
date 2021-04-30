@@ -171,6 +171,13 @@ describe('Market', () => {
   });
 
   describe('#setItems', () => {
+
+    let defaultItems = {
+      merchant: deployerWallet.toString(),
+      tokenAddresses: ["0x41A322b28D0fF354040e2CbC676F0320d8c8850d"],
+      amounts: [1000]
+    }
+
     beforeEach(async () => {
       await deploy();
       await configure();
@@ -181,9 +188,9 @@ describe('Market', () => {
       await expect(auction.setAsk(defaultTokenId, defaultAsk)).rejectedWith('Market: Only media contract');
     });
 
-    it('should not set the items if Merchant has not approved the Market contract', async () => {
-      const auction = await auctionAs(deployerWallet);
-      auction.setItems(defaultTokenId, {merchant: deployerWallet, tokenAddresses: [], amounts: []})
+    it.only('should not set the items if Merchant has not approved the Market contract', async () => {
+      const auction = await auctionAs(mockTokenWallet);
+      await expect(auction.setItems(defaultTokenId, defaultItems)).rejectedWith("love");
     });
 
     it('should set the items by the Merchant', async () => {

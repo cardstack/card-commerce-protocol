@@ -5,7 +5,6 @@ import { Blockchain } from '../utils/Blockchain';
 import { generatedWallets } from '../utils/generatedWallets';
 import { MarketFactory } from '../typechain/MarketFactory';
 import { Wallet } from 'ethers';
-import Decimal from '../utils/Decimal';
 import { BigNumber, BigNumberish } from 'ethers';
 import { formatUnits } from '@ethersproject/units';
 import { AddressZero, MaxUint256 } from '@ethersproject/constants';
@@ -28,6 +27,24 @@ type Bid = {
   bidder: string;
   recipient: string;
 };
+
+type Items = {
+  merchant: string;
+  tokenAddresses: string[];
+  amounts: number[];
+}
+
+type Discount = {
+  merchant: string;
+  tokenContract: string;
+  levelThresholds: string[];
+  discounts: number[];
+}
+
+type LevelRequirement = {
+  tokenContract: string;
+  requiredBalance: number;
+}
 
 describe('Market', () => {
   let [
@@ -161,13 +178,23 @@ describe('Market', () => {
 
     it('should reject if not called by the media address', async () => {
       const auction = await auctionAs(otherWallet);
-
-      await expect(
-        false
-      ).rejectedWith('Market: Only media contract');
+      await expect(auction.setAsk(defaultTokenId, defaultAsk)).rejectedWith('Market: Only media contract');
     });
 
-    it('should set the items if called by the media address', async () => {
+    it('should not set the items if Merchant has not approved the Market contract', async () => {
+      const auction = await auctionAs(deployerWallet);
+      auction.setItems(defaultTokenId, {merchant: deployerWallet, tokenAddresses: [], amounts: []})
+    });
+
+    it('should set the items by the Merchant', async () => {
+
+    });
+
+    it('should set the a discount by the Merchant', async () => {
+
+    });
+
+    it('should emit an event when the discount is set', async () => {
 
     });
 
@@ -175,9 +202,6 @@ describe('Market', () => {
 
     });
 
-    it('should reject if the items are invalid', async () => {
-
-    });
   });
 
   describe('#setAsk', () => {

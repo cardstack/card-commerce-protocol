@@ -17,14 +17,6 @@ chai.use(asPromised);
 let provider = new JsonRpcProvider();
 let blockchain = new Blockchain(provider);
 
-type DecimalValue = { value: BigNumber };
-
-type BidShares = {
-  owner: DecimalValue;
-  prevOwner: DecimalValue;
-  creator: DecimalValue;
-};
-
 type Ask = {
   currency: string;
   amount: BigNumberish;
@@ -35,7 +27,6 @@ type Bid = {
   amount: BigNumberish;
   bidder: string;
   recipient: string;
-  sellOnShare: { value: BigNumberish };
 };
 
 describe('Market', () => {
@@ -46,17 +37,10 @@ describe('Market', () => {
     otherWallet,
   ] = generatedWallets(provider);
 
-  let defaultBidShares = {
-    prevOwner: Decimal.new(10),
-    owner: Decimal.new(80),
-    creator: Decimal.new(10),
-  };
-
   let defaultTokenId = 1;
   let defaultAsk = {
     amount: 100,
-    currency: '0x41A322b28D0fF354040e2CbC676F0320d8c8850d',
-    sellOnShare: Decimal.new(0),
+    currency: '0x41A322b28D0fF354040e2CbC676F0320d8c8850d'
   };
 
   let auctionAddress: string;
@@ -89,14 +73,6 @@ describe('Market', () => {
       auctionAddress,
       deployerWallet
     ).mediaContract();
-  }
-
-  async function setBidShares(
-    auction: Market,
-    tokenId: number,
-    bidShares?: BidShares
-  ) {
-    return auction.setBidShares(tokenId, bidShares);
   }
 
   async function setAsk(auction: Market, tokenId: number, ask?: Ask) {
@@ -177,7 +153,7 @@ describe('Market', () => {
     });
   });
 
-  describe('#setBidShares', () => {
+  describe('#setItems', () => {
     beforeEach(async () => {
       await deploy();
       await configure();
@@ -187,61 +163,20 @@ describe('Market', () => {
       const auction = await auctionAs(otherWallet);
 
       await expect(
-        setBidShares(auction, defaultTokenId, defaultBidShares)
+        false
       ).rejectedWith('Market: Only media contract');
     });
 
-    it('should set the bid shares if called by the media address', async () => {
-      const auction = await auctionAs(mockTokenWallet);
+    it('should set the items if called by the media address', async () => {
 
-      await expect(setBidShares(auction, defaultTokenId, defaultBidShares))
-        .eventually.fulfilled;
-
-      const tokenBidShares = Object.values(
-        await auction.bidSharesForToken(defaultTokenId)
-      ).map((s) => parseInt(formatUnits(s.value, 'ether')));
-
-      expect(tokenBidShares[0]).eq(
-        toNumEther(defaultBidShares.prevOwner.value)
-      );
-      expect(tokenBidShares[1]).eq(toNumEther(defaultBidShares.creator.value));
-      expect(tokenBidShares[2]).eq(toNumEther(defaultBidShares.owner.value));
     });
 
-    it('should emit an event when bid shares are updated', async () => {
-      const auction = await auctionAs(mockTokenWallet);
+    it('should emit an event when items are updated', async () => {
 
-      const block = await provider.getBlockNumber();
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
-      const events = await auction.queryFilter(
-        auction.filters.BidShareUpdated(null, null),
-        block
-      );
-      expect(events.length).eq(1);
-      const logDescription = auction.interface.parseLog(events[0]);
-      expect(toNumWei(logDescription.args.tokenId)).to.eq(defaultTokenId);
-      expect(toNumWei(logDescription.args.bidShares.prevOwner.value)).to.eq(
-        toNumWei(defaultBidShares.prevOwner.value)
-      );
-      expect(toNumWei(logDescription.args.bidShares.creator.value)).to.eq(
-        toNumWei(defaultBidShares.creator.value)
-      );
-      expect(toNumWei(logDescription.args.bidShares.owner.value)).to.eq(
-        toNumWei(defaultBidShares.owner.value)
-      );
     });
 
-    it('should reject if the bid shares are invalid', async () => {
-      const auction = await auctionAs(mockTokenWallet);
-      const invalidBidShares = {
-        prevOwner: Decimal.new(0),
-        owner: Decimal.new(0),
-        creator: Decimal.new(101),
-      };
+    it('should reject if the items are invalid', async () => {
 
-      await expect(
-        setBidShares(auction, defaultTokenId, invalidBidShares)
-      ).rejectedWith('Market: Invalid bid shares, must sum to 100');
     });
   });
 
@@ -260,21 +195,11 @@ describe('Market', () => {
     });
 
     it('should set the ask if called by the media address', async () => {
-      const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
 
-      await expect(setAsk(auction, defaultTokenId, defaultAsk)).eventually
-        .fulfilled;
-
-      const ask = await auction.currentAskForToken(defaultTokenId);
-
-      expect(toNumWei(ask.amount)).to.eq(defaultAsk.amount);
-      expect(ask.currency).to.eq(defaultAsk.currency);
     });
 
     it('should emit an event if the ask is updated', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
 
       const block = await provider.getBlockNumber();
       await setAsk(auction, defaultTokenId, defaultAsk);
@@ -292,7 +217,6 @@ describe('Market', () => {
 
     it('should reject if the ask is too low', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
 
       await expect(
         setAsk(auction, defaultTokenId, {
@@ -302,10 +226,10 @@ describe('Market', () => {
       ).rejectedWith('Market: Ask invalid for share splitting');
     });
 
-    it("should reject if the bid shares haven't been set yet", async () => {
+    it("should reject if the items haven't been set yet", async () => {
       const auction = await auctionAs(mockTokenWallet);
       await expect(setAsk(auction, defaultTokenId, defaultAsk)).rejectedWith(
-        'Market: Invalid bid shares for token'
+        'Market: Invalid items for token'
       );
     });
   });
@@ -317,8 +241,7 @@ describe('Market', () => {
       currency: currency,
       bidder: bidderWallet.address,
       recipient: otherWallet.address,
-      spender: bidderWallet.address,
-      sellOnShare: Decimal.new(10),
+      spender: bidderWallet.address
     };
 
     beforeEach(async () => {
@@ -354,10 +277,8 @@ describe('Market', () => {
 
     it('should revert if the bid currency is 0 address', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
       await mintCurrency(currency, defaultBid.bidder, defaultBid.amount);
       await approveCurrency(currency, auction.address, bidderWallet);
-
       await expect(
         setBid(
           auction,
@@ -369,7 +290,6 @@ describe('Market', () => {
 
     it('should revert if the bid recipient is 0 address', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
       await mintCurrency(currency, defaultBid.bidder, defaultBid.amount);
       await approveCurrency(currency, auction.address, bidderWallet);
 
@@ -384,7 +304,6 @@ describe('Market', () => {
 
     it('should revert if the bidder bids 0 tokens', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
       await mintCurrency(currency, defaultBid.bidder, defaultBid.amount);
       await approveCurrency(currency, auction.address, bidderWallet);
 
@@ -395,7 +314,6 @@ describe('Market', () => {
 
     it('should accept a valid bid', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
       await mintCurrency(currency, defaultBid.bidder, defaultBid.amount);
       await approveCurrency(currency, auction.address, bidderWallet);
 
@@ -417,7 +335,6 @@ describe('Market', () => {
 
     it('should accept a valid bid larger than the min bid', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
 
       const largerValidBid = {
         amount: 130000000,
@@ -425,7 +342,6 @@ describe('Market', () => {
         bidder: bidderWallet.address,
         recipient: otherWallet.address,
         spender: bidderWallet.address,
-        sellOnShare: Decimal.new(10),
       };
 
       await mintCurrency(
@@ -453,7 +369,6 @@ describe('Market', () => {
 
     it('should refund the original bid if the bidder bids again', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
       await mintCurrency(currency, defaultBid.bidder, 5000);
       await approveCurrency(currency, auction.address, bidderWallet);
 
@@ -482,7 +397,6 @@ describe('Market', () => {
 
     it('should emit a bid event', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await setBidShares(auction, defaultTokenId, defaultBidShares);
       await mintCurrency(currency, defaultBid.bidder, 5000);
       await approveCurrency(currency, auction.address, bidderWallet);
 
@@ -498,9 +412,6 @@ describe('Market', () => {
       expect(toNumWei(logDescription.args.tokenId)).to.eq(defaultTokenId);
       expect(toNumWei(logDescription.args.bid.amount)).to.eq(defaultBid.amount);
       expect(logDescription.args.bid.currency).to.eq(defaultBid.currency);
-      expect(toNumWei(logDescription.args.bid.sellOnShare.value)).to.eq(
-        toNumWei(defaultBid.sellOnShare.value)
-      );
     });
   });
 });

@@ -174,13 +174,17 @@ describe('Market', () => {
 
     let defaultItems = {
       merchant: deployerWallet.toString(),
-      tokenAddresses: ["0x41A322b28D0fF354040e2CbC676F0320d8c8850d"],
+      tokenAddresses: [],
       amounts: [1000]
     }
+
+    let currency;
 
     beforeEach(async () => {
       await deploy();
       await configure();
+      currency = await deployCurrency();
+      defaultItems.tokenAddresses.push(currency.address);
     });
 
     it('should reject if not called by the media address', async () => {
@@ -188,24 +192,45 @@ describe('Market', () => {
       await expect(auction.setAsk(defaultTokenId, defaultAsk)).rejectedWith('Market: Only media contract');
     });
 
-    it.only('should not set the items if Merchant has not approved the Market contract', async () => {
+    it('should not set the items if the Merchant has not approved the Market contract', async () => {
       const auction = await auctionAs(mockTokenWallet);
       await expect(auction.setItems(defaultTokenId, defaultItems)).rejectedWith("love");
     });
 
     it('should set the items by the Merchant', async () => {
-
-    });
-
-    it('should set the a discount by the Merchant', async () => {
-
-    });
-
-    it('should emit an event when the discount is set', async () => {
-
+      const auction = await auctionAs(mockTokenWallet);
+      await approveCurrency(currency.address, auction.address, otherWallet);
+      await expect(auction.setItems(defaultTokenId, defaultItems), "Transaction should pass");
     });
 
     it('should emit an event when items are updated', async () => {
+      const auction = await auctionAs(mockTokenWallet);
+      await approveCurrency(currency.address, auction.address, otherWallet);
+      await expect(auction.setItems(defaultTokenId, defaultItems), "Transaction should pass");
+    });
+
+  });
+
+  describe("#setDiscount", () => {
+
+    const defaultDiscount = {
+      merchant: deployerWallet.address,
+      tokenContract: mockTokenWallet.address,
+      levelThresholds: ["noob"],
+      discounts: [{ value: 1 }]
+    }
+
+    beforeEach(async () => {
+      await deploy();
+      await configure();
+    });
+
+    it('should set a discount by the Merchant', async () => {
+      const auction = await auctionAs(mockTokenWallet);
+      await auction.setDiscountBasedOnLevel(0, defaultDiscount);
+    });
+
+    it('should emit an event when the discount is set', async () => {
 
     });
 

@@ -85,7 +85,6 @@ contract Market is IMarket {
         return bidAmount != 0;
     }
 
-
     /* ****************
      * Public Functions
      * ****************
@@ -244,12 +243,17 @@ contract Market is IMarket {
         _finalizeNFTTransfer(tokenId, bid.bidder);
     }
 
-    function setDiscountBasedOnLevel(uint256 tokenId, Discount calldata discount)
-        external
-        override
-        onlyMediaCaller
-    {
-        // TODO implement
+    function setDiscountBasedOnLevel(
+        uint256 tokenId,
+        Discount calldata discount
+    ) external override onlyMediaCaller {
+        /*
+            TODO implement:
+            - check that the caller is authorised to set a discount
+            - check the token for the levels corresponding to the discount set e.g. "noob" = 100 balance
+            - if already set, replace
+            - apply to the bid lockup and also the ask requirement so that the bidder can meet the original ask minus the discount
+        */
     }
 
     function setItems(uint256 tokenId, Items calldata items)
@@ -257,15 +261,24 @@ contract Market is IMarket {
         override
         onlyMediaCaller
     {
-        // TODO implement
+        /*
+            TODO implement:
+            - check that the caller has the correct funds
+            - check that the caller is authorised to add items
+            - attach to the listing token id
+        */
     }
 
-    function setLevelRequirement(uint256 tokenId, LevelRequirement calldata levelRequirement)
-        external
-        override
-        onlyMediaCaller
-    {
-        // TODO implement
+    function setLevelRequirement(
+        uint256 tokenId,
+        LevelRequirement calldata levelRequirement
+    ) external override onlyMediaCaller {
+        /*
+             TODO implement:
+             - check caller is authorised to set a level requirement
+             - tie the level requirement to the listing
+             - ensure that bids that don't meet the requirement are reverted
+         */
     }
 
     /**
@@ -274,6 +287,13 @@ contract Market is IMarket {
      * to the bid recipient. Finally, it removes the accepted bid and the current ask.
      */
     function _finalizeNFTTransfer(uint256 tokenId, address bidder) private {
+        /*
+             TODO:
+             - change to burn the token on finalisation rather than transfer it to the buyer (since the listing NFT has no value)
+             - send buyers tokens to the merchant (including any discounts the buyer is eligible for)
+             - release items to the buyer
+         */
+
         Bid memory bid = _tokenBidders[tokenId][bidder];
 
         IERC20 token = IERC20(bid.currency);

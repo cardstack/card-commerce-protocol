@@ -173,7 +173,7 @@ describe('Market', () => {
   describe('#setItems', () => {
 
     let defaultItems = {
-      merchant: deployerWallet.toString(),
+      merchant: deployerWallet.address,
       tokenAddresses: [],
       amounts: [1000]
     }
@@ -184,7 +184,7 @@ describe('Market', () => {
       await deploy();
       await configure();
       currency = await deployCurrency();
-      defaultItems.tokenAddresses.push(currency.address);
+      defaultItems.tokenAddresses.push(currency);
     });
 
     it('should reject if not called by the media address', async () => {
@@ -194,7 +194,7 @@ describe('Market', () => {
 
     it('should not set the items if the Merchant has not approved the Market contract', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await expect(auction.setItems(defaultTokenId, defaultItems)).rejectedWith("love");
+      await expect(auction.setItems(defaultTokenId, defaultItems)).rejected;
     });
 
     it('should set the items by the Merchant', async () => {

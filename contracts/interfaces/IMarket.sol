@@ -12,7 +12,7 @@ interface IMarket {
     struct Bid {
         // Amount of the SPEND being bid
         uint256 amount;
-        // the currency used in the bid, must have a SPEND value
+        // the currency used in the bid, TODO must have a SPEND value
         address currency;
         // Address of the bidder
         address bidder;
@@ -23,8 +23,9 @@ interface IMarket {
     struct Ask {
         // Amount of the SPEND being asked, convert the bid value to SPEND in real time and satisfy the condition if >= the amount specified
         uint256 amount;
-        // the currency the merchant plans to receive on their end, must have a SPEND value
-        address currency;
+        // Merchant will be charged based on the protocol
+        // TX can be settled in ETH unless the merchant doesnt support (then they would get what they asked by swapping)
+        // TODO spend has no spendable value but is instead a receipt of your ownership in the escrow, buyer can pay in any currency so long as it is approved
     }
 
     struct Items {
@@ -36,13 +37,14 @@ interface IMarket {
         uint256[] amounts;
     }
 
+    //TODO check that the token contract has implemented a level for this top be set
     struct Discount {
         // address of the merchant who has set and locked up these bonuses
         address merchant;
         // address of the token contract that holds the balance that the merchant wants to give a discount to
         address tokenContract;
         // the name of the level tiers e.g. "superfan" that is then checked against the token contract itself
-        string[] levelThresholds;
+        string[] levelThresholds; // TODO rename
         // the discount to apply as a decimal e.g. total cost * 0.9 for a 10% discount
         Decimal.D256[] discounts;
     }
@@ -50,8 +52,8 @@ interface IMarket {
     struct LevelRequirement {
         // the address of the token contract for which the user must have a balance in (should be contained in the token logic itself)
         address tokenContract;
-        // an amount of fungible tokens or a specific tokenId for an NFT
-        uint256 requiredBalance;
+        // check the token contract for this specific level, should revert if it doesn't exist. Admin can change the balance required for each level label
+        string level;
     }
 
     event BidCreated(uint256 indexed tokenId, Bid bid);

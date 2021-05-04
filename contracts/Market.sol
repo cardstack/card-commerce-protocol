@@ -178,17 +178,17 @@ contract Market is IMarket {
             bid.recipient
         );
         emit BidCreated(tokenId, bid);
-
+        // TODO instead of checking the currency, merely check the SPEND value
         // If a bid meets the criteria for an ask, automatically accept the bid.
         // If no ask is set or the bid does not meet the requirements, ignore.
-        if (
-            _tokenAsks[tokenId].currency != address(0) &&
-            bid.currency == _tokenAsks[tokenId].currency &&
-            bid.amount >= _tokenAsks[tokenId].amount
-        ) {
-            // Finalize exchange
-            _finalizeNFTTransfer(tokenId, bid.bidder);
-        }
+        //        if (
+        //            _tokenAsks[tokenId].currency != address(0) &&
+        //            bid.currency == _tokenAsks[tokenId].currency &&
+        //            bid.amount >= _tokenAsks[tokenId].amount
+        //        ) {
+        // Finalize exchange
+        _finalizeNFTTransfer(tokenId, bid.bidder);
+        //        }
     }
 
     /**

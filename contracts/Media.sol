@@ -204,11 +204,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     /**
      * @notice see IMedia
      */
-    function mint(MediaData memory data)
-        public
-        override
-        nonReentrant
-    {
+    function mint(MediaData memory data) public override nonReentrant {
         _mintForCreator(msg.sender, data);
     }
 
@@ -330,12 +326,10 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     /**
      * @notice see IMedia
      */
-    function setDiscountBasedOnLevel(uint256 tokenId, IMarket.Discount memory discount)
-        public
-        override
-        nonReentrant
-        onlyApprovedOrOwner(msg.sender, tokenId)
-    {
+    function setDiscountBasedOnLevel(
+        uint256 tokenId,
+        IMarket.Discount memory discount
+    ) public override nonReentrant onlyApprovedOrOwner(msg.sender, tokenId) {
         IMarket(marketContract).setDiscountBasedOnLevel(tokenId, discount);
     }
 
@@ -348,18 +342,20 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         nonReentrant
         onlyApprovedOrOwner(msg.sender, tokenId)
     {
+        require(
+            msg.sender == items.merchant,
+            "Market: Merchant must be msg sender"
+        );
         IMarket(marketContract).setItems(tokenId, items);
     }
 
     /**
      * @notice see IMedia
      */
-    function setLevelRequirement(uint256 tokenId, IMarket.LevelRequirement memory levelRequirement)
-        public
-        override
-        nonReentrant
-        onlyApprovedOrOwner(msg.sender, tokenId)
-    {
+    function setLevelRequirement(
+        uint256 tokenId,
+        IMarket.LevelRequirement memory levelRequirement
+    ) public override nonReentrant onlyApprovedOrOwner(msg.sender, tokenId) {
         IMarket(marketContract).setLevelRequirement(tokenId, levelRequirement);
     }
 
@@ -498,10 +494,11 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      * Note that although the content hash must be unique for future mints to prevent duplicate media,
      * metadata has no such requirement.
      */
-    function _mintForCreator(
-        address creator,
-        MediaData memory data
-    ) internal onlyValidURI(data.listingURI) onlyValidURI(data.metadataURI) {
+    function _mintForCreator(address creator, MediaData memory data)
+        internal
+        onlyValidURI(data.listingURI)
+        onlyValidURI(data.metadataURI)
+    {
         require(data.contentHash != 0, "Media: content hash must be non-zero");
         require(
             _contentHashes[data.contentHash] == false,

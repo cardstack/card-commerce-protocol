@@ -35,6 +35,9 @@ contract Market is IMarket {
     // Mapping from token to the current ask for the token
     mapping(uint256 => Ask) private _tokenAsks;
 
+    // Mapping from token to the items set
+    mapping(uint256 => Items) private _items;
+
     /* *********
      * Modifiers
      * *********
@@ -256,19 +259,56 @@ contract Market is IMarket {
         */
     }
 
-    function setItems(uint256 tokenId, Items calldata items)
-        external
+    /*
+     * @dev see IMarket.sol
+     */
+    function setItems(uint256 tokenId, Items memory items)
+        public
         override
         onlyMediaCaller
     {
-        /*
-            TODO implement:
-            - check that the caller has the correct funds
-            - check that the caller is authorised to add items
-            - attach to the listing token id
-        */
+        //check if there is an existing items set, if so refund
+        Items memory existingItems = _items[tokenId];
+        if (existingItems.tokenAddresses.length > 0) {
+            // refund from the contract
+            _transferItems(
+                existingItems,
+                address(this),
+                existingItems.merchant
+            );
+        }
+        for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
+            // transfer to the contract
+            _transferItems(items, items.merchant, address(this));
+        }
+        _items[tokenId] = items;
     }
 
+    /*
+     * @dev transfers items
+     * @param items - the items to transfer
+     * @param from - the address sending the tokens
+     * @param to - the address receiving the items
+     */
+    function _transferItems(
+        Items memory items,
+        address from,
+        address to
+    ) private {
+        for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
+            require(
+                IERC20(items.tokenAddresses[i]).transferFrom(
+                    from,
+                    to,
+                    items.amounts[i]
+                )
+            );
+        }
+    }
+
+    /*
+     * @dev see IMarket.sol
+     */
     function setLevelRequirement(
         uint256 tokenId,
         LevelRequirement calldata levelRequirement

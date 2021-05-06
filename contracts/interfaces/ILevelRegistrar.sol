@@ -1,4 +1,5 @@
-pragma solidity 0.8.0;
+pragma solidity 0.6.8;
+pragma experimental ABIEncoderV2;
 
 interface ILevelRegistrar {
     struct Level {
@@ -13,7 +14,7 @@ interface ILevelRegistrar {
      * @param levelsToSet - an array of level structs containing the label and required balance threshold
      * @param token - the address of the token contract
      */
-    function setLevels(Level[] memory levelsToSet, address token) external;
+    function setLevels(Level[] calldata levelsToSet, address token) external;
 
     /*
      * @dev this function gets the levels set by a particular merchant on a particular token for a particular balance

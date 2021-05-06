@@ -97,7 +97,9 @@ interface IMarket {
 
     function setLevelRequirement(
         uint256 tokenId,
-        LevelRequirement calldata levelRequirement
+        LevelRequirement calldata levelRequirement,
+        address merchant,
+        address token
     ) external;
 
     function removeAsk(uint256 tokenId) external;

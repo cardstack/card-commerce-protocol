@@ -83,4 +83,27 @@ contract LevelRegistrar is ILevelRegistrar {
     {
         return levels[merchant][token].length;
     }
+
+    /*
+     * @dev see ILevelRegistrar.sol
+     */
+    function getHasLevel(
+        address merchant,
+        address token,
+        Level memory level
+    ) public view override returns (bool) {
+        uint256 length = getLevelLength(merchant, token);
+        for (uint256 i = 0; i < length; i++) {
+            Level memory currentLevel = levels[merchant][token][i];
+            if (
+                keccak256(
+                    abi.encodePacked(currentLevel.label, currentLevel.threshold)
+                ) == keccak256(abi.encodePacked(level.label, level.threshold))
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

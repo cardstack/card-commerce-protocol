@@ -354,9 +354,16 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
      */
     function setLevelRequirement(
         uint256 tokenId,
-        IMarket.LevelRequirement memory levelRequirement
+        IMarket.LevelRequirement memory levelRequirement,
+        address merchant,
+        address token
     ) public override nonReentrant onlyApprovedOrOwner(msg.sender, tokenId) {
-        IMarket(marketContract).setLevelRequirement(tokenId, levelRequirement);
+        IMarket(marketContract).setLevelRequirement(
+            tokenId,
+            levelRequirement,
+            merchant,
+            token
+        );
     }
 
     /**

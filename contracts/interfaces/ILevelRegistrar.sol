@@ -52,4 +52,17 @@ interface ILevelRegistrar {
         external
         view
         returns (uint256);
+
+    /*
+     * @dev check if a particular level exists in the registrar
+     * @param merchant - address of the merchant who set the levels
+     * @param token - the contract address of the token
+     * @param level - the level to check for existence
+     * @returns true if found else false
+     */
+    function getHasLevel(
+        address merchant,
+        address token,
+        Level calldata level
+    ) external view returns (bool);
 }

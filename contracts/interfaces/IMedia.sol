@@ -46,8 +46,7 @@ interface IMedia {
     /**
      * @notice Mint new media for msg.sender.
      */
-    function mint(MediaData calldata data)
-        external;
+    function mint(MediaData calldata data) external;
 
     /**
      * @notice EIP-712 mintWithSig method. Mints new media for a creator given a valid signature.
@@ -71,19 +70,27 @@ interface IMedia {
     function setAsk(uint256 tokenId, IMarket.Ask calldata ask) external;
 
     /**
-    * @notice Set items in listing
-    */
+     * @notice Set items in listing
+     */
     function setItems(uint256 tokenId, IMarket.Items calldata items) external;
 
     /**
-    * @notice set a discount based on a particular level
-    */
-    function setDiscountBasedOnLevel(uint256 tokenId, IMarket.Discount calldata discount) external;
+     * @notice set a discount based on a particular level
+     */
+    function setDiscountBasedOnLevel(
+        uint256 tokenId,
+        IMarket.Discount calldata discount
+    ) external;
 
     /**
-    * @notice set a level requirement for the buyers e.g. must own 100 FAN to buy
-    */
-    function setLevelRequirement(uint256 tokenId, IMarket.LevelRequirement calldata levelRequirement) external;
+     * @notice set a level requirement for the buyers e.g. must own 100 FAN to buy
+     */
+    function setLevelRequirement(
+        uint256 tokenId,
+        IMarket.LevelRequirement calldata levelRequirement,
+        address merchant,
+        address token
+    ) external;
 
     /**
      * @notice Remove the ask on a piece of media

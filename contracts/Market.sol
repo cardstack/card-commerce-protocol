@@ -10,6 +10,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import {Decimal} from "./Decimal.sol";
 import {Media} from "./Media.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
+import {ILevelRegistrar} from "./interfaces/ILevelRegistrar.sol";
 
 /**
  * @title A Market for pieces of media
@@ -37,6 +38,9 @@ contract Market is IMarket {
 
     // Mapping from token to the items set
     mapping(uint256 => Items) private _items;
+
+    // Mapping from token to the level required to purchase
+    mapping(uint256 => IMarket.LevelRequirement) _levelRequirements;
 
     /* *********
      * Modifiers
@@ -312,14 +316,19 @@ contract Market is IMarket {
      */
     function setLevelRequirement(
         uint256 tokenId,
-        LevelRequirement calldata levelRequirement
-    ) external override onlyMediaCaller {
-        /*
-             TODO implement:
-             - check caller is authorised to set a level requirement
-             - tie the level requirement to the listing
-             - ensure that bids that don't meet the requirement are reverted
-         */
+        LevelRequirement memory levelRequirement,
+        address merchant,
+        address token
+    ) public override onlyMediaCaller {
+        require(
+            ILevelRegistrar(levelRequirement.registrar).getHasLevel(
+                merchant,
+                token,
+                levelRequirement.levelRequired
+            ),
+            "Market: level does not exist"
+        );
+        _levelRequirements[tokenId] = levelRequirement;
     }
 
     /**

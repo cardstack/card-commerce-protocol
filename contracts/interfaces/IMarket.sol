@@ -4,6 +4,7 @@ pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
 import {Decimal} from "../Decimal.sol";
+import {ILevelRegistrar} from "./ILevelRegistrar.sol";
 
 /**
  * @title Interface for Zora Protocol's Market
@@ -50,10 +51,10 @@ interface IMarket {
     }
 
     struct LevelRequirement {
-        // the address of the token contract for which the user must have a balance in (should be contained in the token logic itself)
-        address tokenContract;
-        // check the token contract for this specific level, should revert if it doesn't exist. Admin can change the balance required for each level label
-        string level;
+        // the address of the registrar contract that records the levels
+        address registrar;
+        // the minimum level required to make the bid
+        ILevelRegistrar.Level levelRequired;
     }
 
     event BidCreated(uint256 indexed tokenId, Bid bid);

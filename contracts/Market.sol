@@ -282,6 +282,7 @@ contract Market is IMarket {
             _transferItems(items, items.merchant, address(this));
         }
         _items[tokenId] = items;
+        emit ItemsSet(tokenId, items);
     }
 
     /*

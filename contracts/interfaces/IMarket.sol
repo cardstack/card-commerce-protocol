@@ -38,16 +38,13 @@ interface IMarket {
         uint256[] amounts;
     }
 
-    //TODO check that the token contract has implemented a level for this top be set
     struct Discount {
-        // address of the merchant who has set and locked up these bonuses
-        address merchant;
-        // address of the token contract that holds the balance that the merchant wants to give a discount to
-        address tokenContract;
-        // the name of the level tiers e.g. "superfan" that is then checked against the token contract itself
-        string[] levelThresholds; // TODO rename
+        // address of the registrar that records the levels
+        address registrar;
+        // the level tier eligible for the discount
+        ILevelRegistrar.Level eligibleLevel;
         // the discount to apply as a decimal e.g. total cost * 0.9 for a 10% discount
-        Decimal.D256[] discounts;
+        Decimal.D256 discount;
     }
 
     struct LevelRequirement {
@@ -90,9 +87,11 @@ interface IMarket {
 
     function setItems(uint256 tokenId, Items calldata items) external;
 
-    function setDiscountBasedOnLevel(
+    function setDiscount(
         uint256 tokenId,
-        Discount calldata discount
+        Discount calldata discount,
+        address merchant,
+        address token
     ) external;
 
     function setLevelRequirement(

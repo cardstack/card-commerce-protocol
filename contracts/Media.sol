@@ -326,11 +326,13 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     /**
      * @notice see IMedia
      */
-    function setDiscountBasedOnLevel(
+    function setDiscount(
         uint256 tokenId,
-        IMarket.Discount memory discount
+        IMarket.Discount memory discount,
+        address merchant,
+        address token
     ) public override nonReentrant onlyApprovedOrOwner(msg.sender, tokenId) {
-        IMarket(marketContract).setDiscountBasedOnLevel(tokenId, discount);
+        IMarket(marketContract).setDiscount(tokenId, discount, merchant, token);
     }
 
     /**

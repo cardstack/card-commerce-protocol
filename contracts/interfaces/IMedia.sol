@@ -77,9 +77,11 @@ interface IMedia {
     /**
      * @notice set a discount based on a particular level
      */
-    function setDiscountBasedOnLevel(
+    function setDiscount(
         uint256 tokenId,
-        IMarket.Discount calldata discount
+        IMarket.Discount calldata discount,
+        address merchant,
+        address token
     ) external;
 
     /**

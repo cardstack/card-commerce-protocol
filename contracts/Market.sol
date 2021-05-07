@@ -40,7 +40,10 @@ contract Market is IMarket {
     mapping(uint256 => Items) private _items;
 
     // Mapping from token to the level required to purchase
-    mapping(uint256 => IMarket.LevelRequirement) _levelRequirements;
+    mapping(uint256 => IMarket.LevelRequirement) private _levelRequirements;
+
+    // Mapping from token to the discounts set for the listing
+    mapping(uint256 => IMarket.Discount[]) private _discounts;
 
     /* *********
      * Modifiers
@@ -250,17 +253,23 @@ contract Market is IMarket {
         _finalizeNFTTransfer(tokenId, bid.bidder);
     }
 
-    function setDiscountBasedOnLevel(
+    function setDiscount(
         uint256 tokenId,
-        Discount calldata discount
-    ) external override onlyMediaCaller {
-        /*
-            TODO implement:
-            - check that the caller is authorised to set a discount
-            - check the token for the levels corresponding to the discount set e.g. "noob" = 100 balance
-            - if already set, replace
-            - apply to the bid lockup and also the ask requirement so that the bidder can meet the original ask minus the discount
-        */
+        Discount memory discount,
+        address merchant,
+        address token
+    ) public override onlyMediaCaller {
+        require(
+            ILevelRegistrar(discount.registrar).getHasLevel(
+                merchant,
+                token,
+                discount.eligibleLevel
+            ),
+            "Market: level does not exist"
+        );
+
+        _discounts[tokenId].push(discount);
+        emit DiscountSet(tokenId, discount);
     }
 
     /*
@@ -329,6 +338,7 @@ contract Market is IMarket {
             "Market: level does not exist"
         );
         _levelRequirements[tokenId] = levelRequirement;
+        emit LevelRequirementSet(tokenId, levelRequirement);
     }
 
     /**

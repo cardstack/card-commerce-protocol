@@ -576,19 +576,6 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice transfer a token and remove the ask for it.
-     */
-    function _transfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal override {
-        IMarket(marketContract).removeAsk(tokenId);
-
-        super._transfer(from, to, tokenId);
-    }
-
-    /**
      * @dev Calculates EIP712 DOMAIN_SEPARATOR based on the current contract and chain ID.
      */
     function _calculateDomainSeparator() internal view returns (bytes32) {

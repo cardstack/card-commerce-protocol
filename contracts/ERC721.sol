@@ -282,7 +282,7 @@ contract ERC721 is
         address to,
         uint256 tokenId
     ) public virtual override {
-        return;
+        revert("Transfer is blocked");
     }
 
     /**
@@ -293,7 +293,7 @@ contract ERC721 is
         address to,
         uint256 tokenId
     ) public virtual override {
-        return;
+        revert("Transfer is blocked");
     }
 
     /**
@@ -305,7 +305,7 @@ contract ERC721 is
         uint256 tokenId,
         bytes memory _data
     ) public virtual override {
-       return;
+        revert("Transfer is blocked");
     }
 
     /**
@@ -332,7 +332,7 @@ contract ERC721 is
         uint256 tokenId,
         bytes memory _data
     ) internal virtual {
-        return;
+        revert("Transfer is blocked");
     }
 
     /**
@@ -470,23 +470,7 @@ contract ERC721 is
         address to,
         uint256 tokenId
     ) internal virtual {
-        require(
-            ownerOf(tokenId) == from,
-            "ERC721: transfer of token that is not own"
-        );
-        require(to != address(0), "ERC721: transfer to the zero address");
-
-        _beforeTokenTransfer(from, to, tokenId);
-
-        // Clear approvals from the previous owner
-        _approve(address(0), tokenId);
-
-        _holderTokens[from].remove(tokenId);
-        _holderTokens[to].add(tokenId);
-
-        _tokenOwners.set(tokenId, to);
-
-        emit Transfer(from, to, tokenId);
+        revert("Transfer is blocked");
     }
 
     /**

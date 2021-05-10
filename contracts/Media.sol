@@ -258,8 +258,7 @@ contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
         override
     {
         require(msg.sender == marketContract, "Media: only market contract");
-        previousTokenOwners[tokenId] = ownerOf(tokenId);
-        _safeTransfer(ownerOf(tokenId), recipient, tokenId, "");
+        _burn(tokenId);
     }
 
     /**

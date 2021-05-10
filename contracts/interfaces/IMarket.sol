@@ -76,11 +76,6 @@ interface IMarket {
         view
         returns (Ask memory);
 
-    function isValidBid(uint256 tokenId, uint256 bidAmount)
-        external
-        view
-        returns (bool);
-
     function configure(address mediaContractAddress) external;
 
     function setAsk(uint256 tokenId, Ask calldata ask) external;

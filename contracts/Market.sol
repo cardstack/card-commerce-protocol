@@ -80,21 +80,6 @@ contract Market is IMarket {
         return _tokenAsks[tokenId];
     }
 
-    /**
-     * @notice Validates that the bid is valid by ensuring that the bid amount can be split perfectly into all the bid shares.
-     *  We do this by comparing the sum of the individual share values with the amount and ensuring they are equal. Because
-     *  the splitShare function uses integer division, any inconsistencies with the original and split sums would be due to
-     *  a bid splitting that does not perfectly divide the bid amount.
-     */
-    function isValidBid(uint256 tokenId, uint256 bidAmount)
-        public
-        view
-        override
-        returns (bool)
-    {
-        return bidAmount != 0;
-    }
-
     /* ****************
      * Public Functions
      * ****************
@@ -128,11 +113,6 @@ contract Market is IMarket {
         override
         onlyMediaCaller
     {
-        require(
-            isValidBid(tokenId, ask.amount),
-            "Market: Ask invalid for share splitting"
-        );
-
         _tokenAsks[tokenId] = ask;
         emit AskCreated(tokenId, ask);
     }
@@ -188,17 +168,13 @@ contract Market is IMarket {
             bid.recipient
         );
         emit BidCreated(tokenId, bid);
-        // TODO instead of checking the currency, merely check the SPEND value
+        // TODO check the SPEND value, do not worry about currency unless it has no SPEND value
         // If a bid meets the criteria for an ask, automatically accept the bid.
         // If no ask is set or the bid does not meet the requirements, ignore.
-        //        if (
-        //            _tokenAsks[tokenId].currency != address(0) &&
-        //            bid.currency == _tokenAsks[tokenId].currency &&
-        //            bid.amount >= _tokenAsks[tokenId].amount
-        //        ) {
-        // Finalize exchange
-        _finalizeNFTTransfer(tokenId, bid.bidder);
-        //        }
+        if (bid.amount >= _tokenAsks[tokenId].amount) {
+            // Finalize exchange
+            _finalizeTransfer(tokenId, bid.bidder);
+        }
     }
 
     /**
@@ -245,12 +221,8 @@ contract Market is IMarket {
                 bid.recipient == expectedBid.recipient,
             "Market: Unexpected bid found."
         );
-        require(
-            isValidBid(tokenId, bid.amount),
-            "Market: Bid invalid for share splitting"
-        );
 
-        _finalizeNFTTransfer(tokenId, bid.bidder);
+        _finalizeTransfer(tokenId, bid.bidder);
     }
 
     function setDiscount(
@@ -346,10 +318,9 @@ contract Market is IMarket {
      * the bid to the shareholders. It also transfers the ownership of the media
      * to the bid recipient. Finally, it removes the accepted bid and the current ask.
      */
-    function _finalizeNFTTransfer(uint256 tokenId, address bidder) private {
+    function _finalizeTransfer(uint256 tokenId, address bidder) private {
         /*
              TODO:
-             - change to burn the token on finalisation rather than transfer it to the buyer (since the listing NFT has no value)
              - send buyers tokens to the merchant (including any discounts the buyer is eligible for)
              - release items to the buyer
          */
@@ -358,7 +329,7 @@ contract Market is IMarket {
 
         IERC20 token = IERC20(bid.currency);
 
-        // Transfer media to bid recipient
+        // Transfer listing to the burn address
         Media(mediaContract).auctionTransfer(tokenId, bid.recipient);
 
         // Remove the accepted bid

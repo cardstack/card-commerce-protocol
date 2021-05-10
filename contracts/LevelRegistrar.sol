@@ -61,6 +61,47 @@ contract LevelRegistrar is ILevelRegistrar {
     /*
      * @dev see ILevelRegistrar.sol
      */
+    function getRequiredBalanceByLabel(
+        address merchant,
+        address token,
+        string memory label
+    ) public view override returns (uint256) {
+        uint256 levelLength = getLevelLength(merchant, token);
+        for (uint256 i = 0; i < levelLength; i++) {
+            Level memory level = levels[msg.sender][token][i];
+            if (keccak256(bytes(level.label)) == keccak256(bytes(label))) {
+                return level.threshold;
+            }
+        }
+        // not found therefore no required balance
+        return 0;
+    }
+
+    /*
+     * @dev see ILevelRegistrar.sol
+     */
+    function getHasLevelByLabel(
+        address merchant,
+        address token,
+        string memory levelLabel
+    ) public view override returns (bool) {
+        uint256 length = getLevelLength(merchant, token);
+        for (uint256 i = 0; i < length; i++) {
+            Level memory currentLevel = levels[merchant][token][i];
+            if (
+                keccak256(bytes(currentLevel.label)) ==
+                keccak256(bytes(levelLabel))
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /*
+     * @dev see ILevelRegistrar.sol
+     */
     function getUserLevel(
         address merchant,
         address token,

@@ -125,6 +125,25 @@ contract Market is IMarket {
         delete _tokenAsks[tokenId];
     }
 
+    function _checkUserMatchesLevelRequirement(uint256 tokenId, address spender)
+        internal
+    {
+        LevelRequirement memory levelRequired = _levelRequirements[tokenId];
+        if (levelRequired.token == address(0)) return; // no level set
+
+        uint256 requiredBalance =
+            ILevelRegistrar(levelRequired.registrar).getRequiredBalanceByLabel(
+                levelRequired.merchant,
+                levelRequired.token,
+                levelRequired.levelLabel
+            );
+        require(
+            IERC20(levelRequired.token).balanceOf(spender) >= requiredBalance,
+            "bidder does not meet the level requirement"
+        );
+    }
+
+    //TODO apply discount if applicable
     /**
      * @notice Sets the bid on a particular media for a bidder. The token being used to bid
      * is transferred from the spender to this contract to be held until removed or accepted.
@@ -145,6 +164,8 @@ contract Market is IMarket {
             bid.recipient != address(0),
             "Market: bid recipient cannot be 0 address"
         );
+
+        _checkUserMatchesLevelRequirement(tokenId, spender);
 
         Bid storage existingBid = _tokenBidders[tokenId][bid.bidder];
 
@@ -302,10 +323,10 @@ contract Market is IMarket {
         address token
     ) public override onlyMediaCaller {
         require(
-            ILevelRegistrar(levelRequirement.registrar).getHasLevel(
+            ILevelRegistrar(levelRequirement.registrar).getHasLevelByLabel(
                 merchant,
                 token,
-                levelRequirement.levelRequired
+                levelRequirement.levelLabel
             ),
             "Market: level does not exist"
         );

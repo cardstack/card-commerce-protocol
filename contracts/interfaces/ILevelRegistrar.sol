@@ -29,6 +29,12 @@ interface ILevelRegistrar {
         uint256 balance
     ) external view returns (Level memory);
 
+    function getRequiredBalanceByLabel(
+        address merchant,
+        address token,
+        string calldata label
+    ) external view returns (uint256);
+
     /*
      * @dev this function gets the level set by a particular merchant on a particular token for a particular user
      * @param merchant - the address of the merchant who set the level
@@ -64,5 +70,18 @@ interface ILevelRegistrar {
         address merchant,
         address token,
         Level calldata level
+    ) external view returns (bool);
+
+    /*
+     * @dev check if a particular level by label exists in the registrar
+     * @param merchant - address of the merchant who set the levels
+     * @param token - the contract address of the token
+     * @param levelLabel - the level label to check for existence
+     * @returns true if found else false
+     */
+    function getHasLevelByLabel(
+        address merchant,
+        address token,
+        string calldata levelLabel
     ) external view returns (bool);
 }

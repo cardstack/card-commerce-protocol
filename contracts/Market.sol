@@ -11,6 +11,7 @@ import {Decimal} from "./Decimal.sol";
 import {Inventory} from "./Inventory.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 import {ILevelRegistrar} from "./interfaces/ILevelRegistrar.sol";
+import {IExchange} from "./interfaces/IExchange.sol";
 
 /**
  * @title A Market for pieces of media
@@ -155,11 +156,10 @@ contract Market is IMarket {
         address spender
     ) public override onlyMediaCaller {
         require(bid.bidder != address(0), "Market: bidder cannot be 0 address");
-        require(bid.amount != 0, "Market: cannot bid amount of 0");
-        require(
-            bid.currency != address(0),
-            "Market: bid currency cannot be 0 address"
-        );
+        uint256 bidSPENDValue =
+            IExchange(address(0)).convertToSpend(bid.currency, bid.amount);
+        // TODO fill with address
+        require(bidSPENDValue != 0, "Market: bid must have a SPEND value");
         require(
             bid.recipient != address(0),
             "Market: bid recipient cannot be 0 address"
@@ -189,11 +189,9 @@ contract Market is IMarket {
             bid.recipient
         );
         emit BidCreated(tokenId, bid);
-        // TODO SPEND value within the SDK repo or REVENUE POOL (xdai-protocol-repo)
-        // TODO check the SPEND value, do not worry about currency unless it has no SPEND value
         // If a bid meets the criteria for an ask, automatically accept the bid.
         // If no ask is set or the bid does not meet the requirements, ignore.
-        if (bid.amount >= _tokenAsks[tokenId].amount) {
+        if (bidSPENDValue >= _tokenAsks[tokenId].amount) {
             // Finalize exchange
             _finalizeTransfer(tokenId, bid.bidder);
         }

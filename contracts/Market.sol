@@ -8,7 +8,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import {Decimal} from "./Decimal.sol";
-import {Media} from "./Media.sol";
+import {Inventory} from "./Inventory.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 import {ILevelRegistrar} from "./interfaces/ILevelRegistrar.sol";
 
@@ -189,6 +189,7 @@ contract Market is IMarket {
             bid.recipient
         );
         emit BidCreated(tokenId, bid);
+        // TODO SPEND value within the SDK repo or REVENUE POOL (xdai-protocol-repo)
         // TODO check the SPEND value, do not worry about currency unless it has no SPEND value
         // If a bid meets the criteria for an ask, automatically accept the bid.
         // If no ask is set or the bid does not meet the requirements, ignore.
@@ -351,7 +352,7 @@ contract Market is IMarket {
         IERC20 token = IERC20(bid.currency);
 
         // Transfer listing to the burn address
-        Media(mediaContract).auctionTransfer(tokenId, bid.recipient);
+        Inventory(mediaContract).auctionTransfer(tokenId, bid.recipient);
 
         // Remove the accepted bid
         delete _tokenBidders[tokenId][bidder];

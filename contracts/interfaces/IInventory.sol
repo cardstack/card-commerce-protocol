@@ -8,7 +8,7 @@ import {IMarket} from "./IMarket.sol";
 /**
  * @title Interface for Zora Protocol's Media
  */
-interface IMedia {
+interface IInventory {
     struct EIP712Signature {
         uint256 deadline;
         uint8 v;

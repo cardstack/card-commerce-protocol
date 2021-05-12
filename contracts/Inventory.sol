@@ -14,14 +14,14 @@ import {
 } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Decimal} from "./Decimal.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
-import "./interfaces/IMedia.sol";
+import "./interfaces/IInventory.sol";
 
 /**
  * @title A media value system, with perpetual equity to creators
  * @notice This contract provides an interface to mint media with a market
  * owned by the creator.
  */
-contract Media is IMedia, ERC721Burnable, ReentrancyGuard {
+contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 

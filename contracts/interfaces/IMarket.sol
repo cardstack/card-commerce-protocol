@@ -65,6 +65,7 @@ interface IMarket {
     event AskCreated(uint256 indexed tokenId, Ask ask);
     event AskRemoved(uint256 indexed tokenId, Ask ask);
     event ItemsSet(uint256 indexed tokenId, Items items);
+    //TODO set event when a discount is applied to a successful bid so that the merchant and buyer can see this on their side
     event DiscountSet(uint256 indexed tokenId, Discount discount);
     event LevelRequirementSet(
         uint256 indexed tokenId,

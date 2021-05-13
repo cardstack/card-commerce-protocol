@@ -58,11 +58,10 @@ interface IInventory {
     ) external;
 
     /**
-     * @notice Transfer the token with the given ID to a given address.
-     * Save the previous owner before the transfer, in case there is a sell-on fee.
+     * @notice Transfer the token with the given ID to the burn address.
      * @dev This can only be called by the auction contract specified at deployment
      */
-    function auctionTransfer(uint256 tokenId, address recipient) external;
+    function burnListing(uint256 tokenId) external;
 
     /**
      * @notice Set the ask on a piece of media

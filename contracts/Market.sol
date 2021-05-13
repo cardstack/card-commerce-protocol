@@ -144,9 +144,8 @@ contract Market is IMarket {
         );
     }
 
-    //TODO apply discount if applicable
     /**
-     * @notice Sets the bid on a particular media for a bidder. The token being used to bid
+     * @notice Sets the bid on a particular listing for a bidder. The token being used to bid
      * is transferred from the spender to this contract to be held until removed or accepted.
      * If another bid already exists for the bidder, it is refunded.
      */
@@ -354,24 +353,33 @@ contract Market is IMarket {
         emit LevelRequirementSet(tokenId, levelRequirement);
     }
 
+    //TODO do we need to remove the level requirement and discounts set?
     /**
      * @notice Given a token ID and a bidder, this method transfers the value of
-     * the bid to the shareholders. It also transfers the ownership of the media
+     * the bid to the merchant. It also transfers the ownership of the items
      * to the bid recipient. Finally, it removes the accepted bid and the current ask.
      */
     function _finalizeTransfer(uint256 tokenId, address bidder) private {
-        /*
-             TODO:
-             - send buyers tokens to the merchant (including any discounts the buyer is eligible for)
-             - release items to the buyer
-         */
-
         Bid memory bid = _tokenBidders[tokenId][bidder];
 
         IERC20 token = IERC20(bid.currency);
+        // transfer the bid amount to the merchant
+        token.transferFrom(address(this), bid.recipient, bid.amount);
+
+        Items memory items = _items[tokenId];
+        for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
+            address token = items.tokenAddresses[i];
+            uint256 amount = items.amounts[i];
+            IERC20 erc20TokenToTransfer = IERC20(token);
+            erc20TokenToTransfer.transferFrom(
+                address(this),
+                bid.bidder,
+                amount
+            );
+        }
 
         // Transfer listing to the burn address
-        Inventory(mediaContract).auctionTransfer(tokenId, bid.recipient);
+        Inventory(mediaContract).burnListing(tokenId);
 
         // Remove the accepted bid
         delete _tokenBidders[tokenId][bidder];

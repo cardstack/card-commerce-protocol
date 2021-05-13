@@ -253,10 +253,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     /**
      * @notice see IMedia
      */
-    function auctionTransfer(uint256 tokenId, address recipient)
-        external
-        override
-    {
+    function burnListing(uint256 tokenId) external override {
         require(msg.sender == marketContract, "Media: only market contract");
         _burn(tokenId);
     }

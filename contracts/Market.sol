@@ -189,6 +189,27 @@ contract Market is IMarket {
             bid.recipient
         );
         emit BidCreated(tokenId, bid);
+        //check if eligible for any discounts
+        for (uint256 i = 0; i < _discounts[tokenId].length; i++) {
+            Discount memory currentDiscount = _discounts[tokenId][i];
+            string memory label = currentDiscount.levelRequired.levelLabel;
+            address token = currentDiscount.levelRequired.token;
+            address registrar = currentDiscount.levelRequired.registrar;
+            address merchant = currentDiscount.levelRequired.merchant;
+            ILevelRegistrar.Level memory userLevel =
+                ILevelRegistrar(registrar).getLevelByBalance(
+                    merchant,
+                    token,
+                    0
+                );
+            if (keccak256(bytes(userLevel.label)) == keccak256(bytes(label))) {
+                //TODO what if you are eligible for multiple discounts? Which to choose?
+                //TODO double check that this calculation can achieve the discount by price e.g. price * 0.1 for a 10% discount
+                bid.amount *= currentDiscount.discount.value;
+                emit DiscountApplied(tokenId, bid.bidder, currentDiscount);
+                break;
+            }
+        }
         // If a bid meets the criteria for an ask, automatically accept the bid.
         // If no ask is set or the bid does not meet the requirements, ignore.
         if (bidSPENDValue >= _tokenAsks[tokenId].amount) {
@@ -252,14 +273,14 @@ contract Market is IMarket {
         address token
     ) public override onlyMediaCaller {
         require(
-            ILevelRegistrar(discount.registrar).getHasLevel(
-                merchant,
-                token,
-                discount.eligibleLevel
+            ILevelRegistrar(discount.levelRequired.registrar)
+                .getHasLevelByLabel(
+                discount.levelRequired.merchant,
+                discount.levelRequired.token,
+                discount.levelRequired.levelLabel
             ),
-            "Market: level does not exist"
+            "Market: level does not exist, failed to set discount"
         );
-
         _discounts[tokenId].push(discount);
         emit DiscountSet(tokenId, discount);
     }

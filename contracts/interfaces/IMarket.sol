@@ -39,10 +39,8 @@ interface IMarket {
     }
 
     struct Discount {
-        // address of the registrar that records the levels
-        address registrar;
-        // the level tier eligible for the discount
-        ILevelRegistrar.Level eligibleLevel;
+        // the level requirement to be eligible for this discount
+        LevelRequirement levelRequired;
         // the discount to apply as a decimal e.g. total cost * 0.9 for a 10% discount
         Decimal.D256 discount;
     }
@@ -65,7 +63,11 @@ interface IMarket {
     event AskCreated(uint256 indexed tokenId, Ask ask);
     event AskRemoved(uint256 indexed tokenId, Ask ask);
     event ItemsSet(uint256 indexed tokenId, Items items);
-    //TODO set event when a discount is applied to a successful bid so that the merchant and buyer can see this on their side
+    event DiscountApplied(
+        uint256 indexed tokenId,
+        address indexed bidder,
+        Discount discount
+    );
     event DiscountSet(uint256 indexed tokenId, Discount discount);
     event LevelRequirementSet(
         uint256 indexed tokenId,

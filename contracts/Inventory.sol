@@ -202,14 +202,14 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
      */
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function mint(MediaData memory data) public override nonReentrant {
         _mintForCreator(msg.sender, data);
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function mintWithSig(
         address creator,
@@ -251,7 +251,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function burnListing(uint256 tokenId) external override {
         require(msg.sender == marketContract, "Media: only market contract");
@@ -259,7 +259,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function setAsk(uint256 tokenId, IMarket.Ask memory ask)
         public
@@ -271,7 +271,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function removeAsk(uint256 tokenId)
         external
@@ -283,7 +283,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function setBid(uint256 tokenId, IMarket.Bid memory bid)
         public
@@ -296,7 +296,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function removeBid(uint256 tokenId)
         external
@@ -308,7 +308,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function acceptBid(uint256 tokenId, IMarket.Bid memory bid)
         public
@@ -320,7 +320,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function setDiscount(
         uint256 tokenId,
@@ -332,7 +332,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function setItems(uint256 tokenId, IMarket.Items memory items)
         public
@@ -348,7 +348,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      */
     function setLevelRequirement(
         uint256 tokenId,
@@ -400,7 +400,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      * @dev only callable by approved or owner
      */
     function updateTokenURI(uint256 tokenId, string calldata tokenURI)
@@ -416,7 +416,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice see IMedia
+     * @notice see IInventory
      * @dev only callable by approved or owner
      */
     function updateTokenMetadataURI(
@@ -435,7 +435,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     }
 
     /**
-     * @notice See IMedia
+     * @notice see IInventory
      * @dev This method is loosely based on the permit for ERC-20 tokens in  EIP-2612, but modified
      * for ERC-721.
      */

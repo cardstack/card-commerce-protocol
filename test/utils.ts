@@ -1,4 +1,4 @@
-import { BaseErc20Factory, MediaFactory } from '../typechain';
+import { BaseErc20Factory, InventoryFactory } from '../typechain';
 import { BigNumber, BigNumberish, Bytes, Wallet } from 'ethers';
 import { MaxUint256, AddressZero } from '@ethersproject/constants';
 import { generatedWallets } from '../utils/generatedWallets';
@@ -72,7 +72,7 @@ export async function signPermit(
 ) {
   return new Promise<EIP712Sig>(async (res, reject) => {
     let nonce;
-    const mediaContract = MediaFactory.connect(tokenAddress, owner);
+    const mediaContract = InventoryFactory.connect(tokenAddress, owner);
 
     try {
       nonce = (
@@ -144,7 +144,7 @@ export async function signMintWithSig(
 ) {
   return new Promise<EIP712Sig>(async (res, reject) => {
     let nonce;
-    const mediaContract = MediaFactory.connect(tokenAddress, owner);
+    const mediaContract = InventoryFactory.connect(tokenAddress, owner);
 
     try {
       nonce = (await mediaContract.mintWithSigNonces(creator)).toNumber();

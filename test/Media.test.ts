@@ -356,28 +356,6 @@ describe('Media', () => {
         mint(token, '', tokenURI, zeroContentHashBytes, metadataHashBytes)
       ).rejectedWith('Media: specified uri must be non-empty');
     });
-
-    it('should not be able to mint a token with bid shares summing to less than 100', async () => {
-      const token = await tokenAs(creatorWallet);
-
-      await expect(
-        mint(
-          token,
-          metadataURI,
-          tokenURI,
-          contentHashBytes,
-          metadataHashBytes
-        )
-      ).rejectedWith('Market: Invalid bid shares, must sum to 100');
-    });
-
-    it('should not be able to mint a token with bid shares summing to greater than 100', async () => {
-      const token = await tokenAs(creatorWallet);
-
-      await expect(
-        mint(token, metadataURI, '222', contentHashBytes, metadataHashBytes)
-      ).rejectedWith('Market: Invalid bid shares, must sum to 100');
-    });
   });
 
   describe('#mintWithSig', () => {
@@ -599,7 +577,6 @@ describe('Media', () => {
       await expect(removeAsk(token, 0)).fulfilled;
       const ask = await market.currentAskForToken(0);
       expect(toNumWei(ask.amount)).eq(0);
-      expect(ask.currency).eq(AddressZero);
     });
 
     it('should emit an Ask Removed event', async () => {

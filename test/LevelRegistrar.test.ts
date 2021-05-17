@@ -3,8 +3,6 @@ import asPromised from 'chai-as-promised';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Blockchain } from '../utils/Blockchain';
 import { generatedWallets } from '../utils/generatedWallets';
-import { BigNumber } from 'ethers';
-import { formatUnits } from '@ethersproject/units';
 import { BaseErc20Factory } from '../typechain/BaseErc20Factory';
 import { LevelRegistrar } from '../typechain/LevelRegistrar';
 import {BaseErc20, LevelRegistrarFactory} from "../typechain";
@@ -17,6 +15,13 @@ let blockchain = new Blockchain(provider);
 type Level = {
     label: string;
     threshold: number;
+}
+
+type CrossLevel = {
+    globalLevelLabel: string;
+    recognisedLevelsByLabel: string[];
+    merchants: string[];
+    tokens: string[];
 }
 
 describe('Level Registrar', () => {
@@ -35,15 +40,14 @@ describe('Level Registrar', () => {
         threshold: 100
     }
 
+    const defaultCrossLevel: CrossLevel = {
+        globalLevelLabel: "Star alliance gold",
+        recognisedLevelsByLabel: ["Air NZ premium", "United Gold"],
+        merchants: [deployerWallet.address, otherWallet.address],
+        tokens: [deployerWallet.address, otherWallet.address]
+    }
+
     let levelRegistrarAddress: string;
-
-    function toNumWei(val: BigNumber) {
-        return parseFloat(formatUnits(val, 'wei'));
-    }
-
-    function toNumEther(val: BigNumber) {
-        return parseFloat(formatUnits(val, 'ether'));
-    }
 
     async function deploy() {
         const levelRegistrar = await (
@@ -148,6 +152,23 @@ describe('Level Registrar', () => {
             const hasLevel = await levelRegistrarContract.getHasLevel(deployerWallet.address, erc20.address, defaultLevel);
             expect(hasLevel).eq(false, "noob level should be erased");
         });
-
     });
+
+    describe("#cross levels", () => {
+        let levelRegistrarContract: LevelRegistrar;
+        let erc20: BaseErc20;
+
+        beforeEach(async () => {
+            await deploy();
+            levelRegistrarContract = await configure();
+            erc20 = await createERC20();
+        });
+
+        it("Should be able set and get a cross level", async() => {
+            await levelRegistrarContract.connect(deployerWallet.address).setCrossLevel([defaultCrossLevel]);
+            const crossLevel = await levelRegistrarContract.getCrossLevelLength(deployerWallet.address);
+            expect(crossLevel.toNumber()).eq(1);
+        });
+    });
+
 });

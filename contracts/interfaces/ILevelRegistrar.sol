@@ -9,6 +9,23 @@ interface ILevelRegistrar {
         uint256 threshold;
     }
 
+    struct CrossLevel {
+        // the globally set level e.g. star alliance gold
+        string globalLevelLabel;
+        // the levels that fall under this globally set level e.g. united ruby, air NZ gold etc.
+        string[] recognisedLevelsByLabel;
+        // the addresses of the merchants who set the recognised levels
+        address[] merchants;
+        // the addresses of the tokens that the merchants set a level to
+        address[] tokens;
+    }
+
+    /*
+     * @dev this function allows anyone to set a cross level
+     * @param crossLevelsToSet - an array of CrossLevel structs
+     */
+    function setCrossLevel(CrossLevel[] calldata crossLevelsToSet) external;
+
     /*
      * @dev this function allows any merchant to set a specific level for a specific token
      * @param levelsToSet - an array of level structs containing the label and required balance threshold
@@ -49,12 +66,23 @@ interface ILevelRegistrar {
     ) external view returns (Level memory);
 
     /*
-     * @dev workaround to access a double mapping with an array
+     * @dev get the length of the array for levels
      * @param merchant - address of the merchant who set the levels
      * @param token - the contract address of the token
      * @returns the length of the levels array
      */
     function getLevelLength(address merchant, address token)
+        external
+        view
+        returns (uint256);
+
+    /*
+     * @dev get the length of the array for cross levels
+     * @param merchant - address of the merchant who set the levels
+     * @param token - the contract address of the token
+     * @returns the length of the levels array
+     */
+    function getCrossLevelLength(address merchant)
         external
         view
         returns (uint256);

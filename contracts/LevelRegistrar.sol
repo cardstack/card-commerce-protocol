@@ -6,6 +6,19 @@ import "./interfaces/ILevelRegistrar.sol";
 
 contract LevelRegistrar is ILevelRegistrar {
     mapping(address => mapping(address => Level[])) public levels; // merchant => token address => Level[]
+    mapping(address => CrossLevel[]) public crossLevels;
+
+    function setCrossLevel(CrossLevel[] memory crossLevelsToSet)
+        public
+        override
+    {
+        uint256 crossLevelLength = getCrossLevelLength(msg.sender);
+        //TODO this could be a gas bottleneck, might be better to simply modify the indices rather than blanking it and restarting
+        _clearCrossLevels(msg.sender, crossLevelLength);
+        for (uint256 i = 0; i < crossLevelLength; i++) {
+            crossLevels[msg.sender].push(crossLevelsToSet[i]);
+        }
+    }
 
     /*
      * @dev see ILevelRegistrar.sol
@@ -15,6 +28,7 @@ contract LevelRegistrar is ILevelRegistrar {
         override
     {
         uint256 levelLength = getLevelLength(msg.sender, token);
+        //TODO this could be a gas bottleneck, might be better to simply modify the indices rather than blanking it and restarting
         _clearLevels(msg.sender, token, levelLength);
         for (uint256 i = 0; i < levelsToSet.length; i++) {
             levels[msg.sender][token].push(levelsToSet[i]);
@@ -25,7 +39,7 @@ contract LevelRegistrar is ILevelRegistrar {
      * @dev helper function to clear the levels for re assignment
      * @param merchant - address of the merchant who set the levels
      * @param token - the contract address of the token
-     * @returns the length of the levels array
+     * @param levelLength - the length of the array to delete
      */
     function _clearLevels(
         address merchant,
@@ -34,6 +48,19 @@ contract LevelRegistrar is ILevelRegistrar {
     ) internal {
         for (uint256 i = 0; i < levelLength; i++) {
             delete levels[msg.sender][token][i];
+        }
+    }
+
+    /*
+     * @dev helper function to clear the cross levels for re assignment
+     * @param merchant - address of the merchant who set the levels
+     * @param crossLevelLength - the length of the array to delete
+     */
+    function _clearCrossLevels(address merchant, uint256 crossLevelLength)
+        internal
+    {
+        for (uint256 i = 0; i < crossLevelLength; i++) {
+            delete crossLevels[msg.sender][i];
         }
     }
 
@@ -123,6 +150,18 @@ contract LevelRegistrar is ILevelRegistrar {
         returns (uint256)
     {
         return levels[merchant][token].length;
+    }
+
+    /*
+     * @dev see ILevelRegistrar.sol
+     */
+    function getCrossLevelLength(address merchant)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return crossLevels[merchant].length;
     }
 
     /*

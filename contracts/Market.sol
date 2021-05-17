@@ -155,6 +155,7 @@ contract Market is IMarket {
         address spender
     ) public override onlyMediaCaller {
         require(bid.bidder != address(0), "Market: bidder cannot be 0 address");
+        //TODO be aware of the edge case whereby SPEND fluctuates between the time the tx is made and confirmed
         uint256 bidSPENDValue =
             IExchange(address(0)).convertToSpend(bid.currency, bid.amount);
         // TODO fill with address
@@ -202,7 +203,7 @@ contract Market is IMarket {
                     0
                 );
             if (keccak256(bytes(userLevel.label)) == keccak256(bytes(label))) {
-                //TODO what if you are eligible for multiple discounts? Which to choose?
+                //TODO what if you are eligible for multiple discounts? go for the top tier
                 //TODO double check that this calculation can achieve the discount by price e.g. price * 0.1 for a 10% discount
                 bid.amount *= currentDiscount.discount.value;
                 emit DiscountApplied(tokenId, bid.bidder, currentDiscount);

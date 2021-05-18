@@ -24,9 +24,6 @@ interface IMarket {
     struct Ask {
         // Amount of the SPEND being asked, convert the bid value to SPEND in real time and satisfy the condition if >= the amount specified
         uint256 amount;
-        // Merchant will be charged based on the protocol
-        // TX can be settled in ETH unless the merchant doesnt support (then they would get what they asked by swapping)
-        // TODO spend has no spendable value but is instead a receipt of your ownership in the escrow, buyer can pay in any currency so long as it is approved
     }
 
     struct Items {
@@ -36,6 +33,8 @@ interface IMarket {
         address[] tokenAddresses;
         // items to send out on completion of the listing (amount or tokenId), matching the tokenAddresses index
         uint256[] amounts;
+        // the quantity of these items as per the listing e.g. I am selling 10 products under the same listing NFT, requires a lockup of items * quantity
+        uint256 quantity;
     }
 
     struct Discount {

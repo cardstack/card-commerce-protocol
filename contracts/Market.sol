@@ -240,6 +240,7 @@ contract Market is IMarket {
         token.safeTransfer(bidder, bidAmount);
     }
 
+    //TODO atm only one set of items can be purchased at once, this may or may not be ok
     /**
      * @notice Accepts a bid from a particular bidder. Can only be called by the media contract.
      * See {_finalizeNFTTransfer}
@@ -300,12 +301,18 @@ contract Market is IMarket {
             _transferItems(
                 existingItems,
                 address(this),
-                existingItems.merchant
+                existingItems.merchant,
+                existingItems.quantity
             );
         }
         for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
             // transfer to the contract
-            _transferItems(items, items.merchant, address(this));
+            _transferItems(
+                items,
+                items.merchant,
+                address(this),
+                items.quantity
+            );
         }
         _items[tokenId] = items;
         emit ItemsSet(tokenId, items);
@@ -316,18 +323,20 @@ contract Market is IMarket {
      * @param items - the items to transfer
      * @param from - the address sending the tokens
      * @param to - the address receiving the items
+     * @param quantity - multiple the items by this number, if merchant refund it would be all else if buyer it would just be one
      */
     function _transferItems(
         Items memory items,
         address from,
-        address to
+        address to,
+        uint256 quantity
     ) private {
         for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
             require(
                 IERC20(items.tokenAddresses[i]).transferFrom(
                     from,
                     to,
-                    items.amounts[i]
+                    items.amounts[i] * quantity
                 )
             );
         }
@@ -354,7 +363,6 @@ contract Market is IMarket {
         emit LevelRequirementSet(tokenId, levelRequirement);
     }
 
-    //TODO do we need to remove the level requirement and discounts set?
     /**
      * @notice Given a token ID and a bidder, this method transfers the value of
      * the bid to the merchant. It also transfers the ownership of the items
@@ -379,8 +387,8 @@ contract Market is IMarket {
             );
         }
 
-        // Transfer listing to the burn address
-        Inventory(mediaContract).burnListing(tokenId);
+        // reduce the quantity by one as the buyer just purchased one item only
+        _items[tokenId].quantity -= 1;
 
         // Remove the accepted bid
         delete _tokenBidders[tokenId][bidder];

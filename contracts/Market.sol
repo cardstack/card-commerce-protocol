@@ -28,6 +28,9 @@ contract Market is IMarket {
     // Address of the media contract that can call this market
     address public mediaContract;
 
+    // Address for the SPEND conversion contract
+    address public exchangeSPENDContract;
+
     // Deployment Address
     address private _owner;
 
@@ -94,20 +97,23 @@ contract Market is IMarket {
      * @notice Sets the media contract address. This address is the only permitted address that
      * can call the mutable functions. This method can only be called once.
      */
-    function configure(address mediaContractAddress) external override {
+    function configure(address mediaContractAddress, address exchangeSPENDAddr)
+        external
+        override
+    {
         require(msg.sender == _owner, "Market: Only owner");
         require(mediaContract == address(0), "Market: Already configured");
         require(
             mediaContractAddress != address(0),
             "Market: cannot set media contract as zero address"
         );
+        exchangeSPENDContract = exchangeSPENDAddr;
 
         mediaContract = mediaContractAddress;
     }
 
     /**
-     * @notice Sets the ask on a particular media. If the ask cannot be evenly split into the media's
-     * bid shares, this reverts.
+     * @notice Sets the ask on a particular listing in SPEND.
      */
     function setAsk(uint256 tokenId, Ask memory ask)
         public
@@ -157,8 +163,10 @@ contract Market is IMarket {
         require(bid.bidder != address(0), "Market: bidder cannot be 0 address");
         //TODO be aware of the edge case whereby SPEND fluctuates between the time the tx is made and confirmed
         uint256 bidSPENDValue =
-            IExchange(address(0)).convertToSpend(bid.currency, bid.amount);
-        // TODO fill with address
+            IExchange(address(exchangeSPENDContract)).convertToSpend(
+                bid.currency,
+                bid.amount
+            );
         require(bidSPENDValue != 0, "Market: bid must have a SPEND value");
         require(
             bid.recipient != address(0),

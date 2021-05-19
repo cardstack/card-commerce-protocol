@@ -89,7 +89,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
      * @notice Require that the token has not been burned and has been minted
      */
     modifier onlyExistingToken(uint256 tokenId) {
-        require(_exists(tokenId), "Media: nonexistent token");
+        require(_exists(tokenId), "Inventory: nonexistent token");
         _;
     }
 
@@ -99,7 +99,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     modifier onlyTokenWithContentHash(uint256 tokenId) {
         require(
             tokenContentHashes[tokenId] != 0,
-            "Media: token does not have hash of created content"
+            "Inventory: token does not have hash of created content"
         );
         _;
     }
@@ -110,7 +110,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     modifier onlyTokenWithMetadataHash(uint256 tokenId) {
         require(
             tokenMetadataHashes[tokenId] != 0,
-            "Media: token does not have hash of its metadata"
+            "Inventory: token does not have hash of its metadata"
         );
         _;
     }
@@ -122,7 +122,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     modifier onlyApprovedOrOwner(address spender, uint256 tokenId) {
         require(
             _isApprovedOrOwner(spender, tokenId),
-            "Media: Only approved or owner"
+            "Inventory: Only approved or owner"
         );
         _;
     }
@@ -133,7 +133,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     modifier onlyTokenCreated(uint256 tokenId) {
         require(
             _tokenIdTracker.current() > tokenId,
-            "Media: token with that id does not exist"
+            "Inventory: token with that id does not exist"
         );
         _;
     }
@@ -144,7 +144,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     modifier onlyValidURI(string memory uri) {
         require(
             bytes(uri).length != 0,
-            "Media: specified uri must be non-empty"
+            "Inventory: specified uri must be non-empty"
         );
         _;
     }
@@ -153,7 +153,10 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
      * @notice On deployment, set the market contract address and register the
      * ERC721 metadata interface
      */
-    constructor(address marketContractAddr) public ERC721("Zora", "ZORA") {
+    constructor(address marketContractAddr)
+        public
+        ERC721("CardPay Inventory", "CPI")
+    {
         marketContract = marketContractAddr;
         _registerInterface(_INTERFACE_ID_ERC721_METADATA);
     }
@@ -218,7 +221,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     ) public override nonReentrant {
         require(
             sig.deadline == 0 || sig.deadline >= block.timestamp,
-            "Media: mintWithSig expired"
+            "Inventory: mintWithSig expired"
         );
 
         bytes32 domainSeparator = _calculateDomainSeparator();
@@ -244,7 +247,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
 
         require(
             recoveredAddress != address(0) && creator == recoveredAddress,
-            "Media: Signature invalid"
+            "Inventory: Signature invalid"
         );
 
         _mintForCreator(recoveredAddress, data);
@@ -254,7 +257,10 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
      * @notice see IInventory
      */
     function burnListing(uint256 tokenId) external override {
-        require(msg.sender == marketContract, "Media: only market contract");
+        require(
+            msg.sender == marketContract,
+            "Inventory: only market contract"
+        );
         _burn(tokenId);
     }
 
@@ -379,7 +385,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
 
         require(
             merchants[tokenId] == owner,
-            "Media: owner is not creator of media"
+            "Inventory: owner is not creator of media"
         );
 
         _burn(tokenId);
@@ -394,7 +400,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     function revokeApproval(uint256 tokenId) external override nonReentrant {
         require(
             msg.sender == getApproved(tokenId),
-            "Media: caller not approved address"
+            "Inventory: caller not approved address"
         );
         _approve(address(0), tokenId);
     }
@@ -446,9 +452,9 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     ) public override nonReentrant onlyExistingToken(tokenId) {
         require(
             sig.deadline == 0 || sig.deadline >= block.timestamp,
-            "Media: Permit expired"
+            "Inventory: Permit expired"
         );
-        require(spender != address(0), "Media: spender cannot be 0x0");
+        require(spender != address(0), "Inventory: spender cannot be 0x0");
         bytes32 domainSeparator = _calculateDomainSeparator();
 
         bytes32 digest =
@@ -473,7 +479,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
         require(
             recoveredAddress != address(0) &&
                 ownerOf(tokenId) == recoveredAddress,
-            "Media: Signature invalid"
+            "Inventory: Signature invalid"
         );
 
         _approve(spender, tokenId);
@@ -504,14 +510,17 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
         onlyValidURI(data.listingURI)
         onlyValidURI(data.metadataURI)
     {
-        require(data.contentHash != 0, "Media: content hash must be non-zero");
+        require(
+            data.contentHash != 0,
+            "Inventory: content hash must be non-zero"
+        );
         require(
             _contentHashes[data.contentHash] == false,
-            "Media: a token has already been created with this content hash"
+            "Inventory: a token has already been created with this content hash"
         );
         require(
             data.metadataHash != 0,
-            "Media: metadata hash must be non-zero"
+            "Inventory: metadata hash must be non-zero"
         );
 
         uint256 tokenId = _tokenIdTracker.current();

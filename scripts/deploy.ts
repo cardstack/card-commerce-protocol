@@ -48,6 +48,7 @@ async function start() {
 
   console.log('Configuring Market...');
   const market = MarketFactory.connect(addressBook.market, wallet);
+  //TODO plug in the SPEND exchange contract address here
   const tx = await market.configure(addressBook.media);
   console.log(`Market configuration tx: ${tx.hash}`);
   await tx.wait();

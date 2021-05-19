@@ -81,7 +81,8 @@ describe('Market', () => {
   }
   async function configure() {
     return MarketFactory.connect(auctionAddress, deployerWallet).configure(
-      mockTokenWallet.address
+        mockTokenWallet.address,
+        mockTokenWallet.address
     );
   }
 
@@ -149,6 +150,7 @@ describe('Market', () => {
     it('should revert if not called by the owner', async () => {
       await expect(
         MarketFactory.connect(auctionAddress, otherWallet).configure(
+          mockTokenWallet.address,
           mockTokenWallet.address
         )
       ).eventually.rejectedWith('Market: Only owner');
@@ -174,8 +176,9 @@ describe('Market', () => {
 
     let defaultItems = {
       merchant: deployerWallet.address,
-      tokenAddresses: [],
-      amounts: [1000]
+      tokenAddresses: [mockTokenWallet.address],
+      amounts: [1000],
+      quantity: 10
     }
 
     let currency;

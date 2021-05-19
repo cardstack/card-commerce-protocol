@@ -13,7 +13,7 @@ interface IMarket {
     struct Bid {
         // Amount of the SPEND being bid
         uint256 amount;
-        // the currency used in the bid, TODO must have a SPEND value
+        // the currency used in the bid
         address currency;
         // Address of the bidder
         address bidder;
@@ -83,7 +83,8 @@ interface IMarket {
         view
         returns (Ask memory);
 
-    function configure(address mediaContractAddress) external;
+    function configure(address mediaContractAddress, address exchangeSPENDAddr)
+        external;
 
     function setAsk(uint256 tokenId, Ask calldata ask) external;
 

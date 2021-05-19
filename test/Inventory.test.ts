@@ -56,7 +56,6 @@ type MediaData = {
 };
 
 type Ask = {
-  currency: string;
   amount: BigNumberish;
 };
 
@@ -80,8 +79,7 @@ describe('Media', () => {
 
   let defaultTokenId = 1;
   let defaultAsk = {
-    amount: 100,
-    currency: '0x41A322b28D0fF354040e2CbC676F0320d8c8850d'
+    amount: 100
   };
   const defaultBid = (
     currency: string,
@@ -110,7 +108,7 @@ describe('Media', () => {
     ).deployed();
     tokenAddress = token.address;
 
-    await auction.configure(tokenAddress);
+    await auction.configure(tokenAddress, tokenAddress);
   }
 
   async function mint(
@@ -270,7 +268,6 @@ describe('Media', () => {
       const t = await token.tokenByIndex(0);
       const ownerT = await token.tokenOfOwnerByIndex(creatorWallet.address, 0);
       const ownerOf = await token.ownerOf(0);
-      const creator = await token.tokenCreators(0);
       const prevOwner = await token.previousTokenOwners(0);
       const tokenContentHash = await token.tokenContentHashes(0);
       const metadataContentHash = await token.tokenMetadataHashes(0);
@@ -279,7 +276,6 @@ describe('Media', () => {
 
       expect(toNumWei(t)).eq(toNumWei(ownerT));
       expect(ownerOf).eq(creatorWallet.address);
-      expect(creator).eq(creatorWallet.address);
       expect(prevOwner).eq(creatorWallet.address);
       expect(tokenContentHash).eq(contentHash);
       expect(metadataContentHash).eq(metadataHash);
@@ -597,7 +593,6 @@ describe('Media', () => {
       const logDescription = auction.interface.parseLog(events[0]);
       expect(toNumWei(logDescription.args.tokenId)).to.eq(0);
       expect(toNumWei(logDescription.args.ask.amount)).to.eq(defaultAsk.amount);
-      expect(logDescription.args.ask.currency).to.eq(defaultAsk.currency);
     });
 
     it('should not be callable by anyone that is not owner or approved', async () => {
@@ -655,7 +650,7 @@ describe('Media', () => {
       const token = await tokenAs(bidderWallet);
       const asOwner = await tokenAs(ownerWallet);
       await setupAuction(currencyAddr, 1);
-      await setAsk(asOwner, 1, { ...defaultAsk, currency: currencyAddr });
+      await setAsk(asOwner, 1, { ...defaultAsk });
 
       await expect(
         token.setBid(1, defaultBid(currencyAddr, bidderWallet.address))

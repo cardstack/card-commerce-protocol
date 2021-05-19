@@ -79,38 +79,50 @@ struct Ask {
 }
 
 struct Items {
-  // address of the merchant who has set and locked up these items
+  // address of the merchant who has set and locked up these bonuses
   address merchant;
-  // addresses of each token contract corresponding to the item
+  // addresses of each token contract corresponding to the bonus
   address[] tokenAddresses;
   // items to send out on completion of the listing (amount or tokenId), matching the tokenAddresses index
   uint256[] amounts;
+  // the quantity of these items as per the listing e.g. I am selling 10 products under the same listing NFT, requires a lockup of items * quantity
+  uint256 quantity;
 }
 
 struct Discount {
-  // address of the merchant who has set the discount based on a level
-  address merchant;
-  // address of the token contract that holds the balance that the merchant wants to give a discount to
-  address tokenContract;
-  // the level labels corresponding to a discount below. Calls the token contract to get the level string and match it accordingly
-  string[] levels;
+  // the level requirement to be eligible for this discount
+  LevelRequirement levelRequired;
   // the discount to apply as a decimal e.g. total cost * 0.9 for a 10% discount
-  Decimal.D256[] discounts;
+  Decimal.D256 discount;
 }
 
 struct LevelRequirement {
-  // the address of the token contract for which the user must have a balance in
-  address tokenContract;
-  // call token contract and get the required level to make the purchase e.g. "super fan"
-  string requiredLevel;
+  // the address of the merchant who set this level requirement
+  address merchant;
+  // the address of the registrar contract that records the levels
+  address registrar;
+  // address of the token
+  address token;
+  // the minimum level required to make the bid
+  string levelLabel;
 }
 
-// Contained in the fungible token contract itself
-struct Levels {
-  // labels matching each threshold, e.g. 100 = power user
-  string[] labels;
-  // thresholds for each required level matching a label
-  uint256[] thresholds;
+struct Level {
+  // the label for the level e.g. pro
+  string label;
+  // the min balance required to achieve this level
+  uint256 threshold;
+}
+
+struct CrossLevel {
+  // the globally set level e.g. star alliance gold
+  string globalLevelLabel;
+  // the levels that fall under this globally set level e.g. united ruby, air NZ gold etc.
+  string[] recognisedLevelsByLabel;
+  // the addresses of the merchants who set the recognised levels
+  address[] merchants;
+  // the addresses of the tokens that the merchants set a level to
+  address[] tokens;
 }
 
 ```

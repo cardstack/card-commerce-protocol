@@ -25,8 +25,8 @@ contract Market is IMarket {
      * Globals
      * *******
      */
-    // Address of the media contract that can call this market
-    address public mediaContract;
+    // Address of the inventory contract that can call this market
+    address public inventoryContract;
 
     // Address for the SPEND conversion contract
     address public exchangeSPENDContract;
@@ -58,7 +58,7 @@ contract Market is IMarket {
      * @notice require that the msg.sender is the configured media contract
      */
     modifier onlyMediaCaller() {
-        require(mediaContract == msg.sender, "Market: Only media contract");
+        require(inventoryContract == msg.sender, "Market: Only media contract");
         _;
     }
 
@@ -102,14 +102,14 @@ contract Market is IMarket {
         override
     {
         require(msg.sender == _owner, "Market: Only owner");
-        require(mediaContract == address(0), "Market: Already configured");
+        require(inventoryContract == address(0), "Market: Already configured");
         require(
             mediaContractAddress != address(0),
             "Market: cannot set media contract as zero address"
         );
         exchangeSPENDContract = exchangeSPENDAddr;
 
-        mediaContract = mediaContractAddress;
+        inventoryContract = mediaContractAddress;
     }
 
     /**
@@ -161,6 +161,7 @@ contract Market is IMarket {
         address spender
     ) public override onlyMediaCaller {
         require(bid.bidder != address(0), "Market: bidder cannot be 0 address");
+        require(_items[tokenId].quantity > 0, "Market: No items left for sale");
         //TODO be aware of the edge case whereby SPEND fluctuates between the time the tx is made and confirmed
         uint256 bidSPENDValue =
             IExchange(address(exchangeSPENDContract)).convertToSpend(
@@ -397,6 +398,11 @@ contract Market is IMarket {
 
         // reduce the quantity by one as the buyer just purchased one item only
         _items[tokenId].quantity -= 1;
+
+        // burn the listing if all the items are sold
+        if (_items[tokenId].quantity == 0) {
+            Inventory(inventoryContract).burnListing(tokenId);
+        }
 
         // Remove the accepted bid
         delete _tokenBidders[tokenId][bidder];

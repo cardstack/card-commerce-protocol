@@ -139,15 +139,14 @@ export async function signMintWithSig(
   creator: string,
   contentHash: string,
   metadataHash: string,
-  creatorShare: BigNumberish,
   chainId: number
 ) {
   return new Promise<EIP712Sig>(async (res, reject) => {
     let nonce;
-    const mediaContract = InventoryFactory.connect(tokenAddress, owner);
+    const inventoryContract = InventoryFactory.connect(tokenAddress, owner);
 
     try {
-      nonce = (await mediaContract.mintWithSigNonces(creator)).toNumber();
+      nonce = (await inventoryContract.mintWithSigNonces(creator)).toNumber();
     } catch (e) {
       console.error('NONCE', e);
       reject(e);
@@ -155,7 +154,7 @@ export async function signMintWithSig(
     }
 
     const deadline = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24; // 24 hours
-    const name = await mediaContract.name();
+    const name = await inventoryContract.name();
 
     try {
       const sig = signTypedData(Buffer.from(owner.privateKey.slice(2), 'hex'), {
@@ -170,7 +169,6 @@ export async function signMintWithSig(
             MintWithSig: [
               { name: 'contentHash', type: 'bytes32' },
               { name: 'metadataHash', type: 'bytes32' },
-              { name: 'creatorShare', type: 'uint256' },
               { name: 'nonce', type: 'uint256' },
               { name: 'deadline', type: 'uint256' },
             ],
@@ -180,12 +178,11 @@ export async function signMintWithSig(
             name,
             version: '1',
             chainId,
-            verifyingContract: mediaContract.address,
+            verifyingContract: inventoryContract.address,
           },
           message: {
             contentHash,
             metadataHash,
-            creatorShare,
             nonce,
             deadline,
           },

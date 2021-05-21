@@ -207,7 +207,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     /**
      * @notice see IInventory
      */
-    function mint(MediaData memory data) public override nonReentrant {
+    function mint(InventoryData memory data) public override nonReentrant {
         _mintForCreator(msg.sender, data);
     }
 
@@ -216,7 +216,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
      */
     function mintWithSig(
         address creator,
-        MediaData memory data,
+        InventoryData memory data,
         EIP712Signature memory sig
     ) public override nonReentrant {
         require(
@@ -505,7 +505,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
      * Note that although the content hash must be unique for future mints to prevent duplicate media,
      * metadata has no such requirement.
      */
-    function _mintForCreator(address creator, MediaData memory data)
+    function _mintForCreator(address creator, InventoryData memory data)
         internal
         onlyValidURI(data.listingURI)
         onlyValidURI(data.metadataURI)

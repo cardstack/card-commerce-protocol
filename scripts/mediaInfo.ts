@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Wallet } from '@ethersproject/wallet';
-import { MediaFactory } from '../typechain/MediaFactory';
+import { InventoryFactory } from '../typechain/InventoryFactory';
 
 async function start() {
   const args = require('minimist')(process.argv.slice(2), {
@@ -27,7 +27,7 @@ async function start() {
     throw new Error(`Media contract has not yet been deployed`);
   }
 
-  const media = MediaFactory.connect(addressBook.media, wallet);
+  const media = InventoryFactory.connect(addressBook.media, wallet);
 
   const tokenURI = await media.tokenURI(args.tokenId);
   const contentHash = await media.tokenContentHashes(args.tokenId);

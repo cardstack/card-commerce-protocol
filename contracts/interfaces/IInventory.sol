@@ -16,8 +16,7 @@ interface IInventory {
         bytes32 s;
     }
 
-    //TODO modify to fit some sort of product detail schema
-    struct MediaData {
+    struct InventoryData {
         // A valid URI of the content represented by this token
         string listingURI;
         // A valid URI of the metadata associated with this token
@@ -46,14 +45,14 @@ interface IInventory {
     /**
      * @notice Mint new media for msg.sender.
      */
-    function mint(MediaData calldata data) external;
+    function mint(InventoryData calldata data) external;
 
     /**
      * @notice EIP-712 mintWithSig method. Mints new media for a creator given a valid signature.
      */
     function mintWithSig(
         address creator,
-        MediaData calldata data,
+        InventoryData calldata data,
         EIP712Signature calldata sig
     ) external;
 

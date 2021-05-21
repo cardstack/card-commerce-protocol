@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Wallet } from '@ethersproject/wallet';
-import { MediaFactory } from '../typechain/MediaFactory';
+import { InventoryFactory } from '../typechain/InventoryFactory';
 import Decimal from '../utils/Decimal';
 
 async function start() {
@@ -41,7 +41,7 @@ async function start() {
     throw new Error(`Media contract has not yet been deployed`);
   }
 
-  const media = MediaFactory.connect(addressBook.media, wallet);
+  const media = InventoryFactory.connect(addressBook.media, wallet);
 
   console.log(
     'Minting... ',

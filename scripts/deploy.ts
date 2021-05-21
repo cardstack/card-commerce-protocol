@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Wallet } from '@ethersproject/wallet';
-import { MediaFactory } from '../typechain/MediaFactory';
+import { InventoryFactory } from '../typechain/InventoryFactory';
 import { MarketFactory } from '../typechain/MarketFactory';
 
 async function start() {
@@ -38,18 +38,18 @@ async function start() {
   addressBook.market = deployTx.address;
 
   console.log('Deploying Media...');
-  const mediaDeployTx = await new MediaFactory(wallet).deploy(
+  const mediaDeployTx = await new InventoryFactory(wallet).deploy(
     addressBook.market
   );
   console.log(`Deploy TX: ${mediaDeployTx.deployTransaction.hash}`);
   await mediaDeployTx.deployed();
   console.log(`Media deployed at ${mediaDeployTx.address}`);
-  addressBook.media = mediaDeployTx.address;
+  addressBook.inventory = mediaDeployTx.address;
 
   console.log('Configuring Market...');
   const market = MarketFactory.connect(addressBook.market, wallet);
   //TODO plug in the SPEND exchange contract address here
-  const tx = await market.configure(addressBook.media);
+  const tx = await market.configure(addressBook.inventory, addressBook.inventory);
   console.log(`Market configuration tx: ${tx.hash}`);
   await tx.wait();
   console.log(`Market configured.`);

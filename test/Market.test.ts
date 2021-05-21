@@ -209,7 +209,17 @@ describe('Market', () => {
     it('should emit an event when items are updated', async () => {
       const auction = await auctionAs(mockTokenWallet);
       await approveCurrency(currency.address, auction.address, otherWallet);
+      const block = await provider.getBlockNumber();
       await expect(auction.setItems(defaultTokenId, defaultItems), "Transaction should pass");
+      const events = await auction.queryFilter(
+          auction.filters.ItemsSet(0, null),
+          block
+      );
+      expect(events.length).eq(1);
+    });
+
+    it("should emit an event when items are added", async () => {
+
     });
 
   });
@@ -345,6 +355,10 @@ describe('Market', () => {
           defaultTokenId
         )
       ).rejectedWith('Market: bid currency cannot be 0 address');
+    });
+
+    it("should revert if the bid currency has no SPEND value", async() => {
+
     });
 
     it('should revert if the bid recipient is 0 address', async () => {

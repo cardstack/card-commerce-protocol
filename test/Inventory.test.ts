@@ -8,8 +8,8 @@ import { ethers, Wallet } from 'ethers';
 import { AddressZero } from '@ethersproject/constants';
 import Decimal from '../utils/Decimal';
 import { BigNumber, BigNumberish, Bytes } from 'ethers';
-import { MediaFactory } from '../typechain/MediaFactory';
-import { Media } from '../typechain/Media';
+import { InventoryFactory } from '../typechain/InventoryFactory';
+import { Inventory } from '../typechain/Inventory';
 import {
   approveCurrency,
   deployCurrency,
@@ -48,7 +48,7 @@ let metadataHashBytes: Bytes;
 let tokenURI = 'www.example.com';
 let metadataURI = 'www.example2.com';
 
-type MediaData = {
+type InventoryData = {
   listingURI: string;
   metadataURI: string;
   contentHash: Bytes;
@@ -96,7 +96,7 @@ describe('Media', () => {
   let tokenAddress: string;
 
   async function tokenAs(wallet: Wallet) {
-    return MediaFactory.connect(tokenAddress, wallet);
+    return InventoryFactory.connect(tokenAddress, wallet);
   }
   async function deploy() {
     const auction = await (
@@ -104,7 +104,7 @@ describe('Media', () => {
     ).deployed();
     auctionAddress = auction.address;
     const token = await (
-      await new MediaFactory(deployerWallet).deploy(auction.address)
+      await new InventoryFactory(deployerWallet).deploy(auction.address)
     ).deployed();
     tokenAddress = token.address;
 
@@ -112,13 +112,13 @@ describe('Media', () => {
   }
 
   async function mint(
-    token: Media,
+    token: Inventory,
     metadataURI: string,
     listingURI: string,
     contentHash: Bytes,
     metadataHash: Bytes
   ) {
-    const data: MediaData = {
+    const data: InventoryData = {
       listingURI,
       metadataURI,
       contentHash,
@@ -128,7 +128,7 @@ describe('Media', () => {
   }
 
   async function mintWithSig(
-    token: Media,
+    token: Inventory,
     creator: string,
     listingURI: string,
     metadataURI: string,
@@ -136,7 +136,7 @@ describe('Media', () => {
     metadataHash: Bytes,
     sig: EIP712Sig
   ) {
-    const data: MediaData = {
+    const data: InventoryData = {
       listingURI,
       metadataURI,
       contentHash,
@@ -146,23 +146,23 @@ describe('Media', () => {
     return token.mintWithSig(creator, data, sig);
   }
 
-  async function setAsk(token: Media, tokenId: number, ask: Ask) {
+  async function setAsk(token: Inventory, tokenId: number, ask: Ask) {
     return token.setAsk(tokenId, ask);
   }
 
-  async function removeAsk(token: Media, tokenId: number) {
+  async function removeAsk(token: Inventory, tokenId: number) {
     return token.removeAsk(tokenId);
   }
 
-  async function setBid(token: Media, bid: Bid, tokenId: number) {
+  async function setBid(token: Inventory, bid: Bid, tokenId: number) {
     return token.setBid(tokenId, bid);
   }
 
-  async function removeBid(token: Media, tokenId: number) {
+  async function removeBid(token: Inventory, tokenId: number) {
     return token.removeBid(tokenId);
   }
 
-  async function acceptBid(token: Media, tokenId: number, bid: Bid) {
+  async function acceptBid(token: Inventory, tokenId: number, bid: Bid) {
     return token.acceptBid(tokenId, bid);
   }
 
@@ -294,7 +294,7 @@ describe('Media', () => {
           zeroContentHashBytes,
           metadataHashBytes
         )
-      ).rejectedWith('Media: content hash must be non-zero');
+      ).rejectedWith('Inventory: content hash must be non-zero');
     });
 
     it('should revert if the content hash already exists for a created token', async () => {
@@ -319,7 +319,7 @@ describe('Media', () => {
           metadataHashBytes
         )
       ).rejectedWith(
-        'Media: a token has already been created with this content hash'
+        'Inventory: a token has already been created with this content hash'
       );
     });
 
@@ -334,7 +334,7 @@ describe('Media', () => {
           contentHashBytes,
           zeroContentHashBytes
         )
-      ).rejectedWith('Media: metadata hash must be non-zero');
+      ).rejectedWith('Inventory: metadata hash must be non-zero');
     });
 
     it('should revert if the tokenURI is empty', async () => {
@@ -342,7 +342,7 @@ describe('Media', () => {
 
       await expect(
         mint(token, metadataURI, '', zeroContentHashBytes, metadataHashBytes)
-      ).rejectedWith('Media: specified uri must be non-empty');
+      ).rejectedWith('Inventory: specified uri must be non-empty');
     });
 
     it('should revert if the metadataURI is empty', async () => {
@@ -350,7 +350,7 @@ describe('Media', () => {
 
       await expect(
         mint(token, '', tokenURI, zeroContentHashBytes, metadataHashBytes)
-      ).rejectedWith('Media: specified uri must be non-empty');
+      ).rejectedWith('Inventory: specified uri must be non-empty');
     });
   });
 
@@ -361,14 +361,12 @@ describe('Media', () => {
 
     it('should mint a token for a given creator with a valid signature', async () => {
       const token = await tokenAs(otherWallet);
-      const market = await MarketFactory.connect(auctionAddress, otherWallet);
       const sig = await signMintWithSig(
         creatorWallet,
         token.address,
         creatorWallet.address,
         contentHash,
         metadataHash,
-        Decimal.new(5).value.toString(),
         1
       );
 
@@ -385,7 +383,7 @@ describe('Media', () => {
         )
       ).fulfilled;
 
-      const recovered = await token.tokenCreators(0);
+      const recovered = await token.merchants(0);
       const recoveredTokenURI = await token.tokenURI(0);
       const recoveredMetadataURI = await token.tokenMetadataURI(0);
       const recoveredContentHash = await token.tokenContentHashes(0);
@@ -409,7 +407,6 @@ describe('Media', () => {
         creatorWallet.address,
         tokenURI,
         metadataURI,
-        Decimal.new(5).value.toString(),
         1
       );
 
@@ -423,7 +420,7 @@ describe('Media', () => {
           metadataHashBytes,
           sig
         )
-      ).rejectedWith('Media: Signature invalid');
+      ).rejectedWith('Inventory: Signature invalid');
     });
 
     it('should not mint a token for a different contentHash', async () => {
@@ -439,7 +436,6 @@ describe('Media', () => {
         creatorWallet.address,
         contentHash,
         metadataHash,
-        Decimal.new(5).value.toString(),
         1
       );
 
@@ -453,7 +449,7 @@ describe('Media', () => {
           metadataHashBytes,
           sig
         )
-      ).rejectedWith('Media: Signature invalid');
+      ).rejectedWith('Inventory: Signature invalid');
     });
     it('should not mint a token for a different metadataHash', async () => {
       const badMetadata = '{"some": "bad", "data": ":)"}';
@@ -467,7 +463,6 @@ describe('Media', () => {
         creatorWallet.address,
         contentHash,
         metadataHash,
-        Decimal.new(5).value.toString(),
         1
       );
 
@@ -481,7 +476,7 @@ describe('Media', () => {
           badMetadataHashBytes,
           sig
         )
-      ).rejectedWith('Media: Signature invalid');
+      ).rejectedWith('Inventory: Signature invalid');
     });
     it('should not mint a token for a different creator bid share', async () => {
       const token = await tokenAs(otherWallet);
@@ -491,7 +486,6 @@ describe('Media', () => {
         creatorWallet.address,
         tokenURI,
         metadataURI,
-        Decimal.new(5).value.toString(),
         1
       );
 
@@ -505,7 +499,7 @@ describe('Media', () => {
           metadataHashBytes,
           sig
         )
-      ).rejectedWith('Media: Signature invalid');
+      ).rejectedWith('Inventory: Signature invalid');
     });
     it('should not mint a token with an invalid deadline', async () => {
       const token = await tokenAs(otherWallet);
@@ -515,7 +509,6 @@ describe('Media', () => {
         creatorWallet.address,
         tokenURI,
         metadataURI,
-        Decimal.new(5).value.toString(),
         1
       );
 
@@ -529,7 +522,7 @@ describe('Media', () => {
           metadataHashBytes,
           { ...sig, deadline: '1' }
         )
-      ).rejectedWith('Media: mintWithSig expired');
+      ).rejectedWith('Inventory: mintWithSig expired');
     });
   });
 
@@ -601,7 +594,7 @@ describe('Media', () => {
       await setAsk(token, 0, defaultAsk);
 
       expect(removeAsk(asOther, 0)).rejectedWith(
-        'Media: Only approved or owner'
+        'Inventory: Only approved or owner'
       );
     });
   });
@@ -704,7 +697,7 @@ describe('Media', () => {
       const token = await tokenAs(bidderWallet);
 
       await expect(removeBid(token, 100)).rejectedWith(
-        'Media: token with that id does not exist'
+        'Inventory: token with that id does not exist'
       );
     });
 
@@ -758,7 +751,6 @@ describe('Media', () => {
 
     it('should accept a bid', async () => {
       const token = await tokenAs(ownerWallet);
-      const auction = await MarketFactory.connect(auctionAddress, bidderWallet);
       const asBidder = await tokenAs(bidderWallet);
       const bid = {
         ...defaultBid(currencyAddr, bidderWallet.address, otherWallet.address),
@@ -796,7 +788,7 @@ describe('Media', () => {
 
       await expect(
         token.acceptBid(0, { ...defaultBid(currencyAddr, otherWallet.address) })
-      ).rejectedWith('Media: Only approved or owner');
+      ).rejectedWith('Inventory: Only approved or owner');
     });
 
     it('should revert if a non-existent bid is accepted', async () => {
@@ -831,7 +823,6 @@ describe('Media', () => {
 
     it('should revert on transfer', async () => {
       const token = await tokenAs(ownerWallet);
-      const auction = MarketFactory.connect(auctionAddress, deployerWallet);
       await setAsk(token, 0, defaultAsk);
 
       await expect(
@@ -853,45 +844,24 @@ describe('Media', () => {
       );
     });
 
-    it('should revert when the caller is the owner, but not creator', async () => {
-      const creatorToken = await tokenAs(creatorWallet);
-      await creatorToken.transferFrom(
-        creatorWallet.address,
-        ownerWallet.address,
-        0
-      );
-      const token = await tokenAs(ownerWallet);
-      await expect(token.burn(0)).rejectedWith(
-        'Media: owner is not creator of media'
-      );
-    });
-
-    it('should revert when the caller is approved, but the owner is not the creator', async () => {
-      const creatorToken = await tokenAs(creatorWallet);
-      await creatorToken.transferFrom(
-        creatorWallet.address,
-        ownerWallet.address,
-        0
-      );
-      const token = await tokenAs(ownerWallet);
+    it('should allow approved to burn token', async () => {
+      const token = await tokenAs(creatorWallet);
       await token.approve(otherWallet.address, 0);
 
       const otherToken = await tokenAs(otherWallet);
-      await expect(otherToken.burn(0)).rejectedWith(
-        'Media: owner is not creator of media'
-      );
+      await expect(otherToken.burn(0)).fulfilled;
     });
 
     it('should revert when the caller is not the owner or a creator', async () => {
       const token = await tokenAs(otherWallet);
 
-      await expect(token.burn(0)).rejectedWith('Media: Only approved or owner');
+      await expect(token.burn(0)).rejectedWith('Inventory: Only approved or owner');
     });
 
     it('should revert if the token id does not exist', async () => {
       const token = await tokenAs(creatorWallet);
 
-      await expect(token.burn(100)).rejectedWith('Media: nonexistent token');
+      await expect(token.burn(100)).rejectedWith('Inventory: nonexistent token');
     });
 
     it('should clear approvals, set remove owner, but maintain tokenURI and contentHash when the owner is creator and caller', async () => {
@@ -972,14 +942,14 @@ describe('Media', () => {
       const token = await tokenAs(otherWallet);
 
       await expect(token.updateTokenURI(0, 'blah blah')).rejectedWith(
-        'Media: Only approved or owner'
+        'Inventory: Only approved or owner'
       );
     });
 
     it('should revert if the uri is empty string', async () => {
       const token = await tokenAs(ownerWallet);
       await expect(token.updateTokenURI(0, '')).rejectedWith(
-        'Media: specified uri must be non-empty'
+        'Inventory: specified uri must be non-empty'
       );
     });
 
@@ -1042,14 +1012,14 @@ describe('Media', () => {
       const token = await tokenAs(otherWallet);
 
       await expect(token.updateTokenMetadataURI(0, 'blah blah')).rejectedWith(
-        'Media: Only approved or owner'
+        'Inventory: Only approved or owner'
       );
     });
 
     it('should revert if the uri is empty string', async () => {
       const token = await tokenAs(ownerWallet);
       await expect(token.updateTokenMetadataURI(0, '')).rejectedWith(
-        'Media: specified uri must be non-empty'
+        'Inventory: specified uri must be non-empty'
       );
     });
 
@@ -1124,7 +1094,7 @@ describe('Media', () => {
         1
       );
       await expect(token.permit(otherWallet.address, 0, sig)).rejectedWith(
-        'Media: Signature invalid'
+        'Inventory: Signature invalid'
       );
       await expect(token.getApproved(0)).eventually.eq(AddressZero);
     });
@@ -1162,21 +1132,21 @@ describe('Media', () => {
     it('should revert if the caller is the owner', async () => {
       const token = await tokenAs(ownerWallet);
       await expect(token.revokeApproval(0)).rejectedWith(
-        'Media: caller not approved address'
+        'Inventory: caller not approved address'
       );
     });
 
     it('should revert if the caller is the creator', async () => {
       const token = await tokenAs(creatorWallet);
       await expect(token.revokeApproval(0)).rejectedWith(
-        'Media: caller not approved address'
+        'Inventory: caller not approved address'
       );
     });
 
     it('should revert if the caller is neither owner, creator, or approver', async () => {
       const token = await tokenAs(otherWallet);
       await expect(token.revokeApproval(0)).rejectedWith(
-        'Media: caller not approved address'
+        'Inventory: caller not approved address'
       );
     });
 

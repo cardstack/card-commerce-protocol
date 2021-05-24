@@ -19,7 +19,6 @@ let provider = new JsonRpcProvider();
 let blockchain = new Blockchain(provider);
 
 type Ask = {
-  currency: string;
   amount: BigNumberish;
 };
 
@@ -59,8 +58,7 @@ describe('Market', () => {
 
   let defaultTokenId = 1;
   let defaultAsk = {
-    amount: 100,
-    currency: '0x41A322b28D0fF354040e2CbC676F0320d8c8850d'
+    amount: 100
   };
 
   let auctionAddress: string;
@@ -274,7 +272,8 @@ describe('Market', () => {
     });
 
     it('should set the ask if called by the inventory address', async () => {
-
+      const auction = await auctionAs(mockTokenWallet);
+      await expect(setAsk(auction, defaultTokenId, defaultAsk)).fulfilled;
     });
 
     it('should emit an event if the ask is updated', async () => {
@@ -291,26 +290,8 @@ describe('Market', () => {
       const logDescription = auction.interface.parseLog(events[0]);
       expect(toNumWei(logDescription.args.tokenId)).to.eq(defaultTokenId);
       expect(toNumWei(logDescription.args.ask.amount)).to.eq(defaultAsk.amount);
-      expect(logDescription.args.ask.currency).to.eq(defaultAsk.currency);
     });
 
-    it('should reject if the ask is too low', async () => {
-      const auction = await auctionAs(mockTokenWallet);
-
-      await expect(
-        setAsk(auction, defaultTokenId, {
-          amount: 1,
-          currency: AddressZero,
-        })
-      ).rejectedWith('Market: Ask invalid for share splitting');
-    });
-
-    it("should reject if the items haven't been set yet", async () => {
-      const auction = await auctionAs(mockTokenWallet);
-      await expect(setAsk(auction, defaultTokenId, defaultAsk)).rejectedWith(
-        'Market: Invalid items for token'
-      );
-    });
   });
 
   describe('#setBid', () => {

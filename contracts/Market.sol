@@ -57,8 +57,11 @@ contract Market is IMarket {
     /**
      * @notice require that the msg.sender is the configured media contract
      */
-    modifier onlyMediaCaller() {
-        require(inventoryContract == msg.sender, "Market: Only media contract");
+    modifier onlyInventoryCaller() {
+        require(
+            inventoryContract == msg.sender,
+            "Market: Only inventory contract"
+        );
         _;
     }
 
@@ -118,7 +121,7 @@ contract Market is IMarket {
     function setAsk(uint256 tokenId, Ask memory ask)
         public
         override
-        onlyMediaCaller
+        onlyInventoryCaller
     {
         _tokenAsks[tokenId] = ask;
         emit AskCreated(tokenId, ask);
@@ -127,7 +130,7 @@ contract Market is IMarket {
     /**
      * @notice removes an ask for a token and emits an AskRemoved event
      */
-    function removeAsk(uint256 tokenId) external override onlyMediaCaller {
+    function removeAsk(uint256 tokenId) external override onlyInventoryCaller {
         emit AskRemoved(tokenId, _tokenAsks[tokenId]);
         delete _tokenAsks[tokenId];
     }
@@ -159,7 +162,7 @@ contract Market is IMarket {
         uint256 tokenId,
         Bid memory bid,
         address spender
-    ) public override onlyMediaCaller {
+    ) public override onlyInventoryCaller {
         require(bid.bidder != address(0), "Market: bidder cannot be 0 address");
         require(_items[tokenId].quantity > 0, "Market: No items left for sale");
         //TODO be aware of the edge case whereby SPEND fluctuates between the time the tx is made and confirmed
@@ -234,7 +237,7 @@ contract Market is IMarket {
     function removeBid(uint256 tokenId, address bidder)
         public
         override
-        onlyMediaCaller
+        onlyInventoryCaller
     {
         Bid storage bid = _tokenBidders[tokenId][bidder];
         uint256 bidAmount = bid.amount;
@@ -262,7 +265,7 @@ contract Market is IMarket {
     function acceptBid(uint256 tokenId, Bid calldata expectedBid)
         external
         override
-        onlyMediaCaller
+        onlyInventoryCaller
     {
         Bid memory bid = _tokenBidders[tokenId][expectedBid.bidder];
         require(bid.amount > 0, "Market: cannot accept bid of 0");
@@ -281,7 +284,7 @@ contract Market is IMarket {
         Discount memory discount,
         address merchant,
         address token
-    ) public override onlyMediaCaller {
+    ) public override onlyInventoryCaller {
         require(
             ILevelRegistrar(discount.levelRequired.registrar)
                 .getHasLevelByLabel(
@@ -301,7 +304,7 @@ contract Market is IMarket {
     function setItems(uint256 tokenId, Items memory items)
         public
         override
-        onlyMediaCaller
+        onlyInventoryCaller
     {
         //check if there is an existing items set, if so refund
         Items memory existingItems = _items[tokenId];
@@ -359,7 +362,7 @@ contract Market is IMarket {
         LevelRequirement memory levelRequirement,
         address merchant,
         address token
-    ) public override onlyMediaCaller {
+    ) public override onlyInventoryCaller {
         require(
             ILevelRegistrar(levelRequirement.registrar).getHasLevelByLabel(
                 merchant,

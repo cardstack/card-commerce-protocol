@@ -32,18 +32,19 @@ type Items = {
   merchant: string;
   tokenAddresses: string[];
   amounts: number[];
+  quantity: number;
 }
 
 type Discount = {
-  merchant: string;
-  tokenContract: string;
-  levelThresholds: string[];
-  discounts: number[];
+  levelRequired: LevelRequirement;
+  discount: { value: BigNumberish };
 }
 
 type LevelRequirement = {
-  tokenContract: string;
-  requiredBalance: number;
+  merchant: string;
+  registrar: string;
+  token: string;
+  levelLabel: string;
 }
 
 describe('Market', () => {
@@ -130,6 +131,14 @@ describe('Market', () => {
     spender?: string
   ) {
     await auction.setBid(tokenId, bid, spender || bid.bidder);
+  }
+
+  async function setItems(
+      auction: Market,
+      items: Items,
+      tokenId: number
+  ) {
+    await auction.setItems(tokenId, items);
   }
 
   beforeEach(async () => {
@@ -226,11 +235,16 @@ describe('Market', () => {
 
   describe("#setDiscount", () => {
 
-    const defaultDiscount = {
-      merchant: deployerWallet.address,
-      tokenContract: mockTokenWallet.address,
-      levelThresholds: ["noob"],
-      discounts: [{ value: 1 }]
+    const defaultLevelRequirement: LevelRequirement = {
+        merchant: deployerWallet.address,
+        registrar: mockTokenWallet.address,
+        token: mockTokenWallet.address,
+        levelLabel: "noob"
+    }
+
+    const defaultDiscount: Discount = {
+      levelRequired: defaultLevelRequirement,
+      discount: { value: 1 }
     }
 
     beforeEach(async () => {
@@ -238,13 +252,9 @@ describe('Market', () => {
       await configure();
     });
 
-    it('should set a discount by the Merchant', async () => {
+    it('should set a discount by the Merchant and emit an event', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await auction.setDiscountBasedOnLevel(0, defaultDiscount);
-    });
-
-    it('should emit an event when the discount is set', async () => {
-
+      await expect(auction.setDiscount(0, defaultDiscount, deployerWallet.address, mockTokenWallet.address)).fulfilled;
     });
 
   });
@@ -320,14 +330,35 @@ describe('Market', () => {
       defaultBid.currency = currency;
     });
 
+    async function configureItems() {
+      await mintCurrency(currency, otherWallet.address, 10000);
+      await approveCurrency(currency, auctionAddress, otherWallet);
+      const auction = await auctionAs(mockTokenWallet);
+      await setItems(auction, {
+        merchant: otherWallet.address,
+        tokenAddresses: [currency],
+        amounts: [1000],
+        quantity: 10
+      }, defaultTokenId);
+    }
+
+    it("should revert if no items are available", async() => {
+      const auction = await auctionAs(mockTokenWallet);
+      await expect(setBid(auction, defaultBid, defaultTokenId)).rejectedWith(
+          'Market: No items left for sale'
+      );
+    });
+
     it('should revert if not called by the media contract', async () => {
+      await configureItems();
       const auction = await auctionAs(otherWallet);
       await expect(setBid(auction, defaultBid, defaultTokenId)).rejectedWith(
-        'Market: Only media contract'
+        'Market: Only inventory contract'
       );
     });
 
     it('should revert if the bidder does not have a high enough allowance for their bidding currency', async () => {
+      await configureItems();
       const auction = await auctionAs(mockTokenWallet);
       await expect(setBid(auction, defaultBid, defaultTokenId)).rejectedWith(
         'SafeERC20: ERC20 operation did not succeed'
@@ -335,6 +366,7 @@ describe('Market', () => {
     });
 
     it('should revert if the bidder does not have enough tokens to bid with', async () => {
+      await configureItems();
       const auction = await auctionAs(mockTokenWallet);
       await mintCurrency(currency, defaultBid.bidder, defaultBid.amount - 1);
       await approveCurrency(currency, auction.address, bidderWallet);
@@ -345,6 +377,7 @@ describe('Market', () => {
     });
 
     it('should revert if the bid currency is 0 address', async () => {
+      await configureItems();
       const auction = await auctionAs(mockTokenWallet);
       await mintCurrency(currency, defaultBid.bidder, defaultBid.amount);
       await approveCurrency(currency, auction.address, bidderWallet);
@@ -358,10 +391,11 @@ describe('Market', () => {
     });
 
     it("should revert if the bid currency has no SPEND value", async() => {
-
+      await configureItems();
     });
 
     it('should revert if the bid recipient is 0 address', async () => {
+      await configureItems();
       const auction = await auctionAs(mockTokenWallet);
       await mintCurrency(currency, defaultBid.bidder, defaultBid.amount);
       await approveCurrency(currency, auction.address, bidderWallet);

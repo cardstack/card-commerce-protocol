@@ -100,19 +100,19 @@ contract Market is IMarket {
      * @notice Sets the media contract address. This address is the only permitted address that
      * can call the mutable functions. This method can only be called once.
      */
-    function configure(address mediaContractAddress, address exchangeSPENDAddr)
-        external
-        override
-    {
+    function configure(
+        address inventoryContractAddress,
+        address exchangeSPENDAddr
+    ) external override {
         require(msg.sender == _owner, "Market: Only owner");
         require(inventoryContract == address(0), "Market: Already configured");
         require(
-            mediaContractAddress != address(0),
+            inventoryContractAddress != address(0),
             "Market: cannot set media contract as zero address"
         );
         exchangeSPENDContract = exchangeSPENDAddr;
 
-        inventoryContract = mediaContractAddress;
+        inventoryContract = inventoryContractAddress;
     }
 
     /**
@@ -171,6 +171,7 @@ contract Market is IMarket {
                 bid.currency,
                 bid.amount
             );
+        // Null address check & zero bid check are no longer required as it is caught by SPEND value check
         require(bidSPENDValue != 0, "Market: bid must have a SPEND value");
         require(
             bid.recipient != address(0),

@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 import {IMarket} from "./IMarket.sol";
 
 /**
- * @title Interface for Zora Protocol's Media
+ * @title Interface for CardPay Commerce Protocol's Inventory
  */
 interface IInventory {
     struct EIP712Signature {

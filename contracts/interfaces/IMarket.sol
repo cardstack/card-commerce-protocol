@@ -83,8 +83,10 @@ interface IMarket {
         view
         returns (Ask memory);
 
-    function configure(address mediaContractAddress, address exchangeSPENDAddr)
-        external;
+    function configure(
+        address inventoryContractAddress,
+        address exchangeSPENDAddr
+    ) external;
 
     function setAsk(uint256 tokenId, Ask calldata ask) external;
 

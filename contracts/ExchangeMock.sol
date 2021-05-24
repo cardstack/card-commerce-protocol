@@ -10,6 +10,11 @@ contract ExchangeMock is IExchange {
         override
         returns (uint256)
     {
+        // NB: for testing tokens that have no spend value
+        require(
+            payableTokenAddr != address(1),
+            "ExchangeMock: this address has no SPEND value"
+        );
         return amount * 100;
     }
 }

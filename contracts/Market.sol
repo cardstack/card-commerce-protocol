@@ -225,7 +225,10 @@ contract Market is IMarket {
         }
         // If a bid meets the criteria for an ask, automatically accept the bid.
         // If no ask is set or the bid does not meet the requirements, ignore.
-        if (bidSPENDValue >= _tokenAsks[tokenId].amount) {
+        if (
+            bidSPENDValue >= _tokenAsks[tokenId].amount &&
+            _tokenAsks[tokenId].amount != 0
+        ) {
             // Finalize exchange
             _finalizeTransfer(tokenId, bid.bidder);
         }

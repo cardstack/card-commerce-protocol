@@ -296,7 +296,10 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
         nonReentrant
         onlyExistingToken(tokenId)
     {
-        require(msg.sender == bid.bidder, "Market: Bidder must be msg sender");
+        require(
+            msg.sender == bid.bidder,
+            "Inventory: Bidder must be msg sender"
+        );
         IMarket(marketContract).setBid(tokenId, bid, msg.sender);
     }
 

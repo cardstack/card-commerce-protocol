@@ -320,15 +320,8 @@ contract Market is IMarket {
                 existingItems.quantity
             );
         }
-        for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
-            // transfer to the contract
-            _transferItems(
-                items,
-                items.merchant,
-                address(this),
-                items.quantity
-            );
-        }
+        // transfer to the contract
+        _transferItems(items, items.merchant, address(this), items.quantity);
         _items[tokenId] = items;
         emit ItemsSet(tokenId, items);
     }
@@ -352,7 +345,8 @@ contract Market is IMarket {
                     from,
                     to,
                     items.amounts[i] * quantity
-                )
+                ),
+                "Market: failed to transfer items"
             );
         }
     }

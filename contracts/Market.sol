@@ -165,7 +165,6 @@ contract Market is IMarket {
     ) public override onlyInventoryCaller {
         require(bid.bidder != address(0), "Market: bidder cannot be 0 address");
         require(_items[tokenId].quantity > 0, "Market: No items left for sale");
-        //TODO be aware of the edge case whereby SPEND fluctuates between the time the tx is made and confirmed
         uint256 bidSPENDValue =
             IExchange(address(exchangeSPENDContract)).convertToSpend(
                 bid.currency,

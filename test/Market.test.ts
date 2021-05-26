@@ -389,7 +389,6 @@ describe('Market', () => {
     it('should accept a valid bid but not fulfill it automatically', async () => {
       await configureItems();
       const auction = await auctionAs(mockTokenWallet);
-      await auction.setAsk(1, {amount: 1000000});
       await mintCurrency(currency, defaultBid.bidder, defaultBid.amount);
       await approveCurrency(currency, auction.address, bidderWallet);
 
@@ -409,9 +408,11 @@ describe('Market', () => {
       expect(beforeBalance).eq(afterBalance + defaultBid.amount);
     });
 
-    it('should fulfil a valid bid larger than the min bid', async () => {
+    it('should fulfil a valid bid larger than the ask', async () => {
       await configureItems();
       const auction = await auctionAs(mockTokenWallet);
+      // ask is below the bid
+      await auction.setAsk(1, { amount: 1000000 });
 
       const largerValidBid = {
         amount: 130000000,
@@ -448,7 +449,6 @@ describe('Market', () => {
     it('should refund the original bid if the bidder bids again', async () => {
       await configureItems();
       const auction = await auctionAs(mockTokenWallet);
-      await auction.setAsk(1, { amount: 1000000 });
       await mintCurrency(currency, defaultBid.bidder, 5000);
       await approveCurrency(currency, auction.address, bidderWallet);
 

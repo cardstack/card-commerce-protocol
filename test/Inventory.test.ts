@@ -28,6 +28,7 @@ import {
 } from 'ethers/lib/utils';
 import exp from 'constants';
 import {BytesLike} from "@ethersproject/bytes";
+import {ExchangeMock, ExchangeMockFactory} from "../typechain";
 
 chai.use(asPromised);
 
@@ -66,7 +67,7 @@ type Bid = {
   recipient: string;
 };
 
-describe('Media', () => {
+describe('Inventory', () => {
   let [
     deployerWallet,
     bidderWallet,
@@ -108,7 +109,11 @@ describe('Media', () => {
     ).deployed();
     tokenAddress = token.address;
 
-    await auction.configure(tokenAddress, tokenAddress);
+    const exchangeMock = await (
+        await new ExchangeMockFactory(deployerWallet).deploy()
+    );
+
+    await auction.configure(tokenAddress, exchangeMock.address);
   }
 
   async function mint(
@@ -166,6 +171,18 @@ describe('Media', () => {
     return token.acceptBid(tokenId, bid);
   }
 
+  async function setItems(currencyAddr: string, tokenId = 0, wallet = creatorWallet) {
+    await mintCurrency(currencyAddr, wallet.address, 10000);
+    await approveCurrency(currencyAddr, auctionAddress, wallet);
+    const inventory = await tokenAs(wallet);
+    await inventory.setItems(tokenId, {
+      merchant: wallet.address,
+      tokenAddresses: [currencyAddr],
+      amounts: [1000],
+      quantity: 10
+    });
+  }
+
   // Trade a token a few times and create some open bids
   async function setupAuction(currencyAddr: string, tokenId = 0) {
     const asCreator = await tokenAs(creatorWallet);
@@ -193,23 +210,18 @@ describe('Media', () => {
       metadataHashBytes
     );
 
+    await setItems(currencyAddr,1, creatorWallet);
+
     await setBid(
       asPrevOwner,
       defaultBid(currencyAddr, prevOwnerWallet.address),
       tokenId
     );
-    await acceptBid(asCreator, tokenId, {
-      ...defaultBid(currencyAddr, prevOwnerWallet.address)
-    });
+
     await setBid(
       asOwner,
       defaultBid(currencyAddr, ownerWallet.address),
       tokenId
-    );
-    await acceptBid(
-      asPrevOwner,
-      tokenId,
-      defaultBid(currencyAddr, ownerWallet.address)
     );
     await setBid(
       asBidder,
@@ -611,6 +623,7 @@ describe('Media', () => {
         metadataHashBytes
       );
       currencyAddr = await deployCurrency();
+      await setItems(currencyAddr);
     });
 
     it('should revert if the token bidder does not have a high enough allowance for their bidding currency', async () => {
@@ -639,23 +652,10 @@ describe('Media', () => {
       expect(toNumWei(balance)).eq(100000 - 100);
     });
 
-    it('should automatically transfer the token if the ask is set', async () => {
-      const token = await tokenAs(bidderWallet);
-      const asOwner = await tokenAs(ownerWallet);
-      await setupAuction(currencyAddr, 1);
-      await setAsk(asOwner, 1, { ...defaultAsk });
-
-      await expect(
-        token.setBid(1, defaultBid(currencyAddr, bidderWallet.address))
-      ).fulfilled;
-
-      await expect(token.ownerOf(1)).eventually.eq(bidderWallet.address);
-    });
-
     it('should refund a bid if one already exists for the bidder', async () => {
       const token = await tokenAs(bidderWallet);
       await setupAuction(currencyAddr, 1);
-
+      // bids 100 in setupAuction
       const beforeBalance = toNumWei(
         await getBalance(currencyAddr, bidderWallet.address)
       );

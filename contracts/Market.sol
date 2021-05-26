@@ -255,7 +255,6 @@ contract Market is IMarket {
         token.safeTransfer(bidder, bidAmount);
     }
 
-    //TODO atm only one set of items can be purchased at once, this may or may not be ok
     /**
      * @notice Accepts a bid from a particular bidder. Can only be called by the media contract.
      * See {_finalizeNFTTransfer}
@@ -311,7 +310,7 @@ contract Market is IMarket {
     {
         //check if there is an existing items set, if so refund
         Items memory existingItems = _items[tokenId];
-        if (existingItems.tokenAddresses.length > 0) {
+        if (existingItems.quantity > 0) {
             // refund from the contract
             _transferItems(
                 existingItems,
@@ -344,7 +343,7 @@ contract Market is IMarket {
                 IERC20(items.tokenAddresses[i]).transferFrom(
                     from,
                     to,
-                    items.amounts[i] * quantity
+                    items.amounts[i].mul(quantity)
                 ),
                 "Market: failed to transfer items"
             );
@@ -384,17 +383,9 @@ contract Market is IMarket {
         // transfer the bid amount to the merchant
         token.transferFrom(address(this), bid.recipient, bid.amount);
 
+        // transfer the items out to the bidder
         Items memory items = _items[tokenId];
-        for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
-            address token = items.tokenAddresses[i];
-            uint256 amount = items.amounts[i];
-            IERC20 erc20TokenToTransfer = IERC20(token);
-            erc20TokenToTransfer.transferFrom(
-                address(this),
-                bid.bidder,
-                amount
-            );
-        }
+        _transferItems(items, address(this), bid.bidder, 1);
 
         // reduce the quantity by one as the buyer just purchased one item only
         _items[tokenId].quantity -= 1;

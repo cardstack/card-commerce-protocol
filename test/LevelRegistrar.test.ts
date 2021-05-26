@@ -154,7 +154,7 @@ describe('Level Registrar', () => {
         });
     });
 
-    describe("#cross levels", () => {
+    describe("#crossLevels", () => {
         let levelRegistrarContract: LevelRegistrar;
         let erc20: BaseErc20;
 
@@ -165,9 +165,9 @@ describe('Level Registrar', () => {
         });
 
         it("Should be able set and get a cross level", async() => {
-            await levelRegistrarContract.connect(deployerWallet.address).setCrossLevel([defaultCrossLevel]);
-            const crossLevel = await levelRegistrarContract.getCrossLevelLength(deployerWallet.address);
-            expect(crossLevel.toNumber()).eq(1);
+            await levelRegistrarContract.connect(deployerWallet).setCrossLevel([defaultCrossLevel]);
+            const crossLevelLength = await levelRegistrarContract.getCrossLevelLength(deployerWallet.address);
+            expect(crossLevelLength.toNumber()).eq(1);
         });
     });
 

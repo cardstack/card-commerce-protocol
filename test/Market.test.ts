@@ -236,14 +236,19 @@ describe('Market', () => {
     });
 
     it("should refund the merchant when items are updated", async() => {
+      const contractPreBalance = await getBalance(currency, auctionAddress);
+      expect(contractPreBalance.toNumber()).eq(0, "contract should have no funds from the items");
       // set the items twice to trigger a refund and resetting of the items
       await configureItems(currency);
-      // items sent
+      // mint 10k & deposit 10k = balance of 0
       const beforeBalance = await getBalance(currency, otherWallet.address);
-      // original items refunded and the same amount set again
+      const contractBalance = await getBalance(currency, auctionAddress);
+      expect(contractBalance.toNumber()).eq(10000, "contract should have the merchants item deposit");
+      expect(beforeBalance.toNumber()).eq(0, "Merchant should have nothing left over from the item deposit");
+      // mint 10k & deposit 10k but get back original 10k = balance of 10k
       await configureItems(currency);
       const afterBalance = await getBalance(currency, otherWallet.address);
-      expect(beforeBalance).eq(afterBalance, "balance should be the same after resetting items");
+      expect(afterBalance.toNumber()).eq(10000, "should have 10k left over after refund of original deposit + 10k mint")
     });
 
     it("should emit an event when items are updated", async () => {

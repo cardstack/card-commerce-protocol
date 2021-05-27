@@ -338,6 +338,23 @@ contract Market is IMarket {
         address to,
         uint256 quantity
     ) private {
+        if (address(this) == from) {
+            // Cannot use transferFrom because the contract has no allowance on itself...
+            _transferItemsFromContract(items, to, quantity);
+        } else {
+            _transferItemsOnBehalfOfUser(items, from, to, quantity);
+        }
+    }
+
+    /*
+     * See _transferItems
+     */
+    function _transferItemsOnBehalfOfUser(
+        Items memory items,
+        address from,
+        address to,
+        uint256 quantity
+    ) private {
         for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
             require(
                 IERC20(items.tokenAddresses[i]).transferFrom(
@@ -345,7 +362,26 @@ contract Market is IMarket {
                     to,
                     items.amounts[i].mul(quantity)
                 ),
-                "Market: failed to transfer items"
+                "Market: failed to transfer items on behalf of the user"
+            );
+        }
+    }
+
+    /*
+     * See _transferItems
+     */
+    function _transferItemsFromContract(
+        Items memory items,
+        address to,
+        uint256 quantity
+    ) private {
+        for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
+            require(
+                IERC20(items.tokenAddresses[i]).transfer(
+                    to,
+                    items.amounts[i].mul(quantity)
+                ),
+                "Market: failed to transfer items from the contract"
             );
         }
     }

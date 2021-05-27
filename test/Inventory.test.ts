@@ -184,33 +184,33 @@ describe('Inventory', () => {
   }
 
   // Trade a token a few times and create some open bids
-  async function setupAuction(currencyAddr: string, tokenId = 0) {
-    const asCreator = await tokenAs(creatorWallet);
+  async function setupAuction(currencyAddr: string, tokenId = 0, merchant = creatorWallet) {
+    const asMerchant = await tokenAs(merchant);
     const asPrevOwner = await tokenAs(prevOwnerWallet);
     const asOwner = await tokenAs(ownerWallet);
     const asBidder = await tokenAs(bidderWallet);
     const asOther = await tokenAs(otherWallet);
 
-    await mintCurrency(currencyAddr, creatorWallet.address, 10000);
+    await mintCurrency(currencyAddr, merchant.address, 10000);
     await mintCurrency(currencyAddr, prevOwnerWallet.address, 10000);
     await mintCurrency(currencyAddr, ownerWallet.address, 10000);
     await mintCurrency(currencyAddr, bidderWallet.address, 10000);
     await mintCurrency(currencyAddr, otherWallet.address, 10000);
-    await approveCurrency(currencyAddr, auctionAddress, creatorWallet);
+    await approveCurrency(currencyAddr, auctionAddress, merchant);
     await approveCurrency(currencyAddr, auctionAddress, prevOwnerWallet);
     await approveCurrency(currencyAddr, auctionAddress, ownerWallet);
     await approveCurrency(currencyAddr, auctionAddress, bidderWallet);
     await approveCurrency(currencyAddr, auctionAddress, otherWallet);
 
     await mint(
-      asCreator,
+      asMerchant,
       metadataURI,
       tokenURI,
       contentHashBytes,
       metadataHashBytes
     );
 
-    await setItems(currencyAddr,1, creatorWallet);
+    await setItems(currencyAddr, tokenId, merchant);
 
     await setBid(
       asPrevOwner,
@@ -543,26 +543,12 @@ describe('Inventory', () => {
     beforeEach(async () => {
       await deploy();
       currencyAddr = await deployCurrency();
-      await setupAuction(currencyAddr);
+      await setupAuction(currencyAddr, 0, ownerWallet);
     });
 
     it('should set the ask', async () => {
       const token = await tokenAs(ownerWallet);
       await expect(setAsk(token, 0, defaultAsk)).fulfilled;
-    });
-
-    it('should reject if the ask is 0', async () => {
-      const token = await tokenAs(ownerWallet);
-      await expect(setAsk(token, 0, { ...defaultAsk, amount: 0 })).rejectedWith(
-        'Market: Ask invalid for share splitting'
-      );
-    });
-
-    it('should reject if the ask amount is invalid and cannot be split', async () => {
-      const token = await tokenAs(ownerWallet);
-      await expect(
-        setAsk(token, 0, { ...defaultAsk, amount: 101 })
-      ).rejectedWith('Market: Ask invalid for share splitting');
     });
   });
 
@@ -693,7 +679,7 @@ describe('Inventory', () => {
       );
     });
 
-    it('should revert if the tokenId has not yet ben created', async () => {
+    it('should revert if the tokenId has not yet been created', async () => {
       const token = await tokenAs(bidderWallet);
 
       await expect(removeBid(token, 100)).rejectedWith(
@@ -746,7 +732,7 @@ describe('Inventory', () => {
     beforeEach(async () => {
       await deploy();
       currencyAddr = await deployCurrency();
-      await setupAuction(currencyAddr);
+      await setupAuction(currencyAddr, 0, ownerWallet);
     });
 
     it('should accept a bid', async () => {
@@ -758,9 +744,6 @@ describe('Inventory', () => {
       await setBid(asBidder, bid, 0);
 
       await expect(token.acceptBid(0, bid)).fulfilled;
-      const newOwner = await token.ownerOf(0);
-
-      expect(newOwner).eq(otherWallet.address);
     });
 
     it('should emit a bid finalized event if the bid is accepted', async () => {

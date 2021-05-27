@@ -333,10 +333,9 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     function setDiscount(
         uint256 tokenId,
         IMarket.Discount memory discount,
-        address merchant,
-        address token
+        address merchant
     ) public override nonReentrant onlyApprovedOrOwner(msg.sender, tokenId) {
-        IMarket(marketContract).setDiscount(tokenId, discount, merchant, token);
+        IMarket(marketContract).setDiscount(tokenId, discount, merchant);
     }
 
     /**

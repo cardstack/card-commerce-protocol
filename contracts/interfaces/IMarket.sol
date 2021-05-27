@@ -95,8 +95,7 @@ interface IMarket {
     function setDiscount(
         uint256 tokenId,
         Discount calldata discount,
-        address merchant,
-        address token
+        address merchant
     ) external;
 
     function setLevelRequirement(

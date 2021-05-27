@@ -78,8 +78,7 @@ interface IInventory {
     function setDiscount(
         uint256 tokenId,
         IMarket.Discount calldata discount,
-        address merchant,
-        address token
+        address merchant
     ) external;
 
     /**

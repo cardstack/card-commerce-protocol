@@ -284,8 +284,7 @@ contract Market is IMarket {
     function setDiscount(
         uint256 tokenId,
         Discount memory discount,
-        address merchant,
-        address token
+        address merchant
     ) public override onlyInventoryCaller {
         require(
             ILevelRegistrar(discount.levelRequired.registrar)

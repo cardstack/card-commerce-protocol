@@ -72,11 +72,11 @@ export async function signPermit(
 ) {
   return new Promise<EIP712Sig>(async (res, reject) => {
     let nonce;
-    const mediaContract = InventoryFactory.connect(tokenAddress, owner);
+    const inventoryContract = InventoryFactory.connect(tokenAddress, owner);
 
     try {
       nonce = (
-        await mediaContract.permitNonces(owner.address, tokenId)
+        await inventoryContract.permitNonces(owner.address, tokenId)
       ).toNumber();
     } catch (e) {
       console.error('NONCE', e);
@@ -85,7 +85,7 @@ export async function signPermit(
     }
 
     const deadline = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24; // 24 hours
-    const name = await mediaContract.name();
+    const name = await inventoryContract.name();
 
     try {
       const sig = signTypedData(Buffer.from(owner.privateKey.slice(2), 'hex'), {
@@ -109,7 +109,7 @@ export async function signPermit(
             name,
             version: '1',
             chainId,
-            verifyingContract: mediaContract.address,
+            verifyingContract: inventoryContract.address,
           },
           message: {
             spender: toAddress,

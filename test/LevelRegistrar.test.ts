@@ -76,7 +76,6 @@ describe('Level Registrar', () => {
         let erc20: BaseErc20;
 
         beforeEach(async () => {
-            //await blockchain.resetAsync();
             await deploy();
             levelRegistrarContract = await configure();
             erc20 = await createERC20();
@@ -165,7 +164,7 @@ describe('Level Registrar', () => {
         });
 
         it("Should be able set and get a cross level", async() => {
-            await levelRegistrarContract.connect(deployerWallet).setCrossLevel([defaultCrossLevel]);
+            await levelRegistrarContract.setCrossLevel([defaultCrossLevel]);
             const crossLevelLength = await levelRegistrarContract.getCrossLevelLength(deployerWallet.address);
             expect(crossLevelLength.toNumber()).eq(1);
         });

@@ -71,7 +71,7 @@ describe('Inventory', () => {
   let [
     deployerWallet,
     bidderWallet,
-    creatorWallet,
+    merchantWallet,
     ownerWallet,
     prevOwnerWallet,
     otherWallet,
@@ -171,7 +171,7 @@ describe('Inventory', () => {
     return token.acceptBid(tokenId, bid);
   }
 
-  async function setItems(currencyAddr: string, tokenId = 0, wallet = creatorWallet) {
+  async function setItems(currencyAddr: string, tokenId = 0, wallet = merchantWallet) {
     await mintCurrency(currencyAddr, wallet.address, 10000);
     await approveCurrency(currencyAddr, auctionAddress, wallet);
     const inventory = await tokenAs(wallet);
@@ -184,7 +184,7 @@ describe('Inventory', () => {
   }
 
   // Trade a token a few times and create some open bids
-  async function setupAuction(currencyAddr: string, tokenId = 0, merchant = creatorWallet) {
+  async function setupAuction(currencyAddr: string, tokenId = 0, merchant = merchantWallet) {
     const asMerchant = await tokenAs(merchant);
     const asPrevOwner = await tokenAs(prevOwnerWallet);
     const asOwner = await tokenAs(ownerWallet);
@@ -265,7 +265,7 @@ describe('Inventory', () => {
     });
 
     it('should mint a token', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await expect(
         mint(
@@ -278,7 +278,7 @@ describe('Inventory', () => {
       ).fulfilled;
 
       const t = await token.tokenByIndex(0);
-      const ownerT = await token.tokenOfOwnerByIndex(creatorWallet.address, 0);
+      const ownerT = await token.tokenOfOwnerByIndex(merchantWallet.address, 0);
       const ownerOf = await token.ownerOf(0);
       const prevOwner = await token.previousTokenOwners(0);
       const tokenContentHash = await token.tokenContentHashes(0);
@@ -287,8 +287,8 @@ describe('Inventory', () => {
       const savedMetadataURI = await token.tokenMetadataURI(0);
 
       expect(toNumWei(t)).eq(toNumWei(ownerT));
-      expect(ownerOf).eq(creatorWallet.address);
-      expect(prevOwner).eq(creatorWallet.address);
+      expect(ownerOf).eq(merchantWallet.address);
+      expect(prevOwner).eq(merchantWallet.address);
       expect(tokenContentHash).eq(contentHash);
       expect(metadataContentHash).eq(metadataHash);
       expect(savedTokenURI).eq(tokenURI);
@@ -296,7 +296,7 @@ describe('Inventory', () => {
     });
 
     it('should revert if an empty content hash is specified', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await expect(
         mint(
@@ -310,7 +310,7 @@ describe('Inventory', () => {
     });
 
     it('should revert if the content hash already exists for a created token', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await expect(
         mint(
@@ -336,7 +336,7 @@ describe('Inventory', () => {
     });
 
     it('should revert if the metadataHash is empty', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await expect(
         mint(
@@ -350,7 +350,7 @@ describe('Inventory', () => {
     });
 
     it('should revert if the tokenURI is empty', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await expect(
         mint(token, metadataURI, '', zeroContentHashBytes, metadataHashBytes)
@@ -358,7 +358,7 @@ describe('Inventory', () => {
     });
 
     it('should revert if the metadataURI is empty', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await expect(
         mint(token, '', tokenURI, zeroContentHashBytes, metadataHashBytes)
@@ -371,22 +371,22 @@ describe('Inventory', () => {
       await deploy();
     });
 
-    it('should mint a token for a given creator with a valid signature', async () => {
+    it('should mint a token for a given merchant with a valid signature', async () => {
       const token = await tokenAs(otherWallet);
       const sig = await signMintWithSig(
-        creatorWallet,
-        token.address,
-        creatorWallet.address,
-        contentHash,
-        metadataHash,
-        1
+          merchantWallet,
+          token.address,
+          merchantWallet.address,
+          contentHash,
+          metadataHash,
+          1
       );
 
-      const beforeNonce = await token.mintWithSigNonces(creatorWallet.address);
+      const beforeNonce = await token.mintWithSigNonces(merchantWallet.address);
       await expect(
         mintWithSig(
           token,
-          creatorWallet.address,
+          merchantWallet.address,
           tokenURI,
           metadataURI,
           contentHashBytes,
@@ -401,9 +401,9 @@ describe('Inventory', () => {
       const recoveredContentHash = await token.tokenContentHashes(0);
       const recoveredMetadataHash = await token.tokenMetadataHashes(0);
 
-      const afterNonce = await token.mintWithSigNonces(creatorWallet.address);
+      const afterNonce = await token.mintWithSigNonces(merchantWallet.address);
 
-      expect(recovered).to.eq(creatorWallet.address);
+      expect(recovered).to.eq(merchantWallet.address);
       expect(recoveredTokenURI).to.eq(tokenURI);
       expect(recoveredMetadataURI).to.eq(metadataURI);
       expect(recoveredContentHash).to.eq(contentHash);
@@ -411,12 +411,12 @@ describe('Inventory', () => {
       expect(toNumWei(afterNonce)).to.eq(toNumWei(beforeNonce) + 1);
     });
 
-    it('should not mint a token for a different creator', async () => {
+    it('should not mint a token for a different merchant', async () => {
       const token = await tokenAs(otherWallet);
       const sig = await signMintWithSig(
         bidderWallet,
         token.address,
-        creatorWallet.address,
+        merchantWallet.address,
         tokenURI,
         metadataURI,
         1
@@ -425,7 +425,7 @@ describe('Inventory', () => {
       await expect(
         mintWithSig(
           token,
-          creatorWallet.address,
+          merchantWallet.address,
           tokenURI,
           metadataURI,
           contentHashBytes,
@@ -443,9 +443,9 @@ describe('Inventory', () => {
 
       const token = await tokenAs(otherWallet);
       const sig = await signMintWithSig(
-        creatorWallet,
+        merchantWallet,
         token.address,
-        creatorWallet.address,
+        merchantWallet.address,
         contentHash,
         metadataHash,
         1
@@ -454,7 +454,7 @@ describe('Inventory', () => {
       await expect(
         mintWithSig(
           token,
-          creatorWallet.address,
+          merchantWallet.address,
           tokenURI,
           metadataURI,
           badContentHashBytes,
@@ -463,6 +463,7 @@ describe('Inventory', () => {
         )
       ).rejectedWith('Inventory: Signature invalid');
     });
+
     it('should not mint a token for a different metadataHash', async () => {
       const badMetadata = '{"some": "bad", "data": ":)"}';
       const badMetadataHex = formatBytes32String(badMetadata);
@@ -470,9 +471,9 @@ describe('Inventory', () => {
       const badMetadataHashBytes = arrayify(badMetadataHash);
       const token = await tokenAs(otherWallet);
       const sig = await signMintWithSig(
-        creatorWallet,
+        merchantWallet,
         token.address,
-        creatorWallet.address,
+        merchantWallet.address,
         contentHash,
         metadataHash,
         1
@@ -481,7 +482,7 @@ describe('Inventory', () => {
       await expect(
         mintWithSig(
           token,
-          creatorWallet.address,
+          merchantWallet.address,
           tokenURI,
           metadataURI,
           contentHashBytes,
@@ -490,35 +491,13 @@ describe('Inventory', () => {
         )
       ).rejectedWith('Inventory: Signature invalid');
     });
-    it('should not mint a token for a different creator bid share', async () => {
-      const token = await tokenAs(otherWallet);
-      const sig = await signMintWithSig(
-        creatorWallet,
-        token.address,
-        creatorWallet.address,
-        tokenURI,
-        metadataURI,
-        1
-      );
 
-      await expect(
-        mintWithSig(
-          token,
-          creatorWallet.address,
-          tokenURI,
-          metadataURI,
-          contentHashBytes,
-          metadataHashBytes,
-          sig
-        )
-      ).rejectedWith('Inventory: Signature invalid');
-    });
     it('should not mint a token with an invalid deadline', async () => {
       const token = await tokenAs(otherWallet);
       const sig = await signMintWithSig(
-        creatorWallet,
+        merchantWallet,
         token.address,
-        creatorWallet.address,
+        merchantWallet.address,
         tokenURI,
         metadataURI,
         1
@@ -527,7 +506,7 @@ describe('Inventory', () => {
       await expect(
         mintWithSig(
           token,
-          creatorWallet.address,
+          merchantWallet.address,
           tokenURI,
           metadataURI,
           contentHashBytes,
@@ -602,7 +581,7 @@ describe('Inventory', () => {
     beforeEach(async () => {
       await deploy();
       await mint(
-        await tokenAs(creatorWallet),
+        await tokenAs(merchantWallet),
         metadataURI,
         '1111',
         otherContentHashBytes,
@@ -710,11 +689,9 @@ describe('Inventory', () => {
     });
 
     it('should remove a bid, even if the token is burned', async () => {
-      const asOwner = await tokenAs(ownerWallet);
       const asBidder = await tokenAs(bidderWallet);
-      const asCreator = await tokenAs(creatorWallet);
+      const asCreator = await tokenAs(merchantWallet);
 
-      await asOwner.transferFrom(ownerWallet.address, creatorWallet.address, 0);
       await asCreator.burn(0);
       const beforeBalance = toNumWei(
         await getBalance(currencyAddr, bidderWallet.address)
@@ -780,20 +757,6 @@ describe('Inventory', () => {
         token.acceptBid(0, { ...defaultBid(currencyAddr, AddressZero) })
       ).rejectedWith('Market: cannot accept bid of 0');
     });
-
-    it('should revert if an invalid bid is accepted', async () => {
-      const token = await tokenAs(ownerWallet);
-      const asBidder = await tokenAs(bidderWallet);
-      const bid = {
-        ...defaultBid(currencyAddr, bidderWallet.address),
-        amount: 99,
-      };
-      await setBid(asBidder, bid, 0);
-
-      await expect(token.acceptBid(0, bid)).rejectedWith(
-        'Market: Bid invalid for share splitting'
-      );
-    });
   });
 
   describe('#transfer', () => {
@@ -804,20 +767,19 @@ describe('Inventory', () => {
       await setupAuction(currencyAddr);
     });
 
-    it('should revert on transfer', async () => {
+    it('should revert on transfer for NFT listings', async () => {
       const token = await tokenAs(ownerWallet);
-      await setAsk(token, 0, defaultAsk);
 
       await expect(
         token.transferFrom(ownerWallet.address, otherWallet.address, 0)
-      ).rejected;
+      ).rejectedWith("Transfer is blocked");
     });
   });
 
   describe('#burn', () => {
     beforeEach(async () => {
       await deploy();
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
       await mint(
         token,
         metadataURI,
@@ -828,7 +790,7 @@ describe('Inventory', () => {
     });
 
     it('should allow approved to burn token', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
       await token.approve(otherWallet.address, 0);
 
       const otherToken = await tokenAs(otherWallet);
@@ -842,13 +804,13 @@ describe('Inventory', () => {
     });
 
     it('should revert if the token id does not exist', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await expect(token.burn(100)).rejectedWith('Inventory: nonexistent token');
     });
 
     it('should clear approvals, set remove owner, but maintain tokenURI and contentHash when the owner is creator and caller', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
       await expect(token.approve(otherWallet.address, 0)).fulfilled;
 
       await expect(token.burn(0)).fulfilled;
@@ -875,7 +837,7 @@ describe('Inventory', () => {
     });
 
     it('should clear approvals, set remove owner, but maintain tokenURI and contentHash when the owner is creator and caller is approved', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
       await expect(token.approve(otherWallet.address, 0)).fulfilled;
 
       const otherToken = await tokenAs(otherWallet);
@@ -914,7 +876,7 @@ describe('Inventory', () => {
     });
 
     it('should revert if the token does not exist', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await expect(token.updateTokenURI(1, 'blah blah')).rejectedWith(
         'ERC721: operator query for nonexistent token'
@@ -930,14 +892,14 @@ describe('Inventory', () => {
     });
 
     it('should revert if the uri is empty string', async () => {
-      const token = await tokenAs(ownerWallet);
+      const token = await tokenAs(merchantWallet);
       await expect(token.updateTokenURI(0, '')).rejectedWith(
         'Inventory: specified uri must be non-empty'
       );
     });
 
     it('should revert if the token has been burned', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await mint(
         token,
@@ -954,8 +916,8 @@ describe('Inventory', () => {
       );
     });
 
-    it('should set the tokenURI to the URI passed if the msg.sender is the owner', async () => {
-      const token = await tokenAs(ownerWallet);
+    it('should set the tokenURI to the URI passed if the msg.sender is the merchant', async () => {
+      const token = await tokenAs(merchantWallet);
       await expect(token.updateTokenURI(0, 'blah blah')).fulfilled;
 
       const tokenURI = await token.tokenURI(0);
@@ -963,7 +925,7 @@ describe('Inventory', () => {
     });
 
     it('should set the tokenURI to the URI passed if the msg.sender is approved', async () => {
-      const token = await tokenAs(ownerWallet);
+      const token = await tokenAs(merchantWallet);
       await token.approve(otherWallet.address, 0);
 
       const otherToken = await tokenAs(otherWallet);
@@ -984,14 +946,14 @@ describe('Inventory', () => {
     });
 
     it('should revert if the token does not exist', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await expect(token.updateTokenMetadataURI(1, 'blah blah')).rejectedWith(
         'ERC721: operator query for nonexistent token'
       );
     });
 
-    it('should revert if the caller is not the owner of the token or approved', async () => {
+    it('should revert if the caller is not the merchant or approved', async () => {
       const token = await tokenAs(otherWallet);
 
       await expect(token.updateTokenMetadataURI(0, 'blah blah')).rejectedWith(
@@ -1000,14 +962,14 @@ describe('Inventory', () => {
     });
 
     it('should revert if the uri is empty string', async () => {
-      const token = await tokenAs(ownerWallet);
+      const token = await tokenAs(merchantWallet);
       await expect(token.updateTokenMetadataURI(0, '')).rejectedWith(
         'Inventory: specified uri must be non-empty'
       );
     });
 
     it('should revert if the token has been burned', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
 
       await mint(
         token,
@@ -1024,8 +986,8 @@ describe('Inventory', () => {
       );
     });
 
-    it('should set the tokenMetadataURI to the URI passed if msg.sender is the owner', async () => {
-      const token = await tokenAs(ownerWallet);
+    it('should set the tokenMetadataURI to the URI passed if msg.sender is the merchant', async () => {
+      const token = await tokenAs(merchantWallet);
       await expect(token.updateTokenMetadataURI(0, 'blah blah')).fulfilled;
 
       const tokenURI = await token.tokenMetadataURI(0);
@@ -1033,7 +995,7 @@ describe('Inventory', () => {
     });
 
     it('should set the tokenMetadataURI to the URI passed if the msg.sender is approved', async () => {
-      const token = await tokenAs(ownerWallet);
+      const token = await tokenAs(merchantWallet);
       await token.approve(otherWallet.address, 0);
 
       const otherToken = await tokenAs(otherWallet);
@@ -1056,7 +1018,7 @@ describe('Inventory', () => {
     it('should allow a wallet to set themselves to approved with a valid signature', async () => {
       const token = await tokenAs(otherWallet);
       const sig = await signPermit(
-        ownerWallet,
+        merchantWallet,
         otherWallet.address,
         token.address,
         0,
@@ -1120,7 +1082,7 @@ describe('Inventory', () => {
     });
 
     it('should revert if the caller is the creator', async () => {
-      const token = await tokenAs(creatorWallet);
+      const token = await tokenAs(merchantWallet);
       await expect(token.revokeApproval(0)).rejectedWith(
         'Inventory: caller not approved address'
       );
@@ -1134,7 +1096,7 @@ describe('Inventory', () => {
     });
 
     it('should revoke the approval for token id if caller is approved address', async () => {
-      const token = await tokenAs(ownerWallet);
+      const token = await tokenAs(merchantWallet);
       await token.approve(otherWallet.address, 0);
       const otherToken = await tokenAs(otherWallet);
       await expect(otherToken.revokeApproval(0)).fulfilled;

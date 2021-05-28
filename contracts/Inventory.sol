@@ -57,9 +57,9 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
     bytes32 public constant PERMIT_TYPEHASH =
         0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
 
-    //keccak256("MintWithSig(bytes32 contentHash,bytes32 metadataHash,uint256 creatorShare,uint256 nonce,uint256 deadline)");
+    //keccak256("MintWithSig(bytes32 contentHash,bytes32 metadataHash,uint256 nonce,uint256 deadline)");
     bytes32 public constant MINT_WITH_SIG_TYPEHASH =
-        0x2952e482b8e2b192305f87374d7af45dc2eafafe4f50d26a0c02e90f2fdbe14b;
+        0xb8e306ed6e9440d7144689fef1dae9b858f47d62ff7c9fd9b88d1c353ab85fc9;
 
     // Mapping from address to token id to permit nonce
     mapping(address => mapping(uint256 => uint256)) public permitNonces;

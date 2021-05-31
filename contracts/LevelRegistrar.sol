@@ -60,7 +60,7 @@ contract LevelRegistrar is ILevelRegistrar {
         internal
     {
         for (uint256 i = 0; i < crossLevelLength; i++) {
-            delete crossLevels[msg.sender][i];
+            delete crossLevels[merchant][i];
         }
     }
 

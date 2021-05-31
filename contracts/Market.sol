@@ -137,6 +137,7 @@ contract Market is IMarket {
 
     function _checkUserMatchesLevelRequirement(uint256 tokenId, address spender)
         internal
+        view
     {
         LevelRequirement memory levelRequired = _levelRequirements[tokenId];
         if (levelRequired.token == address(0)) return; // no level set
@@ -149,7 +150,7 @@ contract Market is IMarket {
             );
         require(
             IERC20(levelRequired.token).balanceOf(spender) >= requiredBalance,
-            "bidder does not meet the level requirement"
+            "Market: bidder does not meet the level requirement"
         );
     }
 
@@ -202,25 +203,12 @@ contract Market is IMarket {
         );
         emit BidCreated(tokenId, bid);
         //check if eligible for any discounts
-        for (uint256 i = 0; i < _discounts[tokenId].length; i++) {
-            Discount memory currentDiscount = _discounts[tokenId][i];
-            string memory label = currentDiscount.levelRequired.levelLabel;
-            address token = currentDiscount.levelRequired.token;
-            address registrar = currentDiscount.levelRequired.registrar;
-            address merchant = currentDiscount.levelRequired.merchant;
-            ILevelRegistrar.Level memory userLevel =
-                ILevelRegistrar(registrar).getLevelByBalance(
-                    merchant,
-                    token,
-                    0
-                );
-            if (keccak256(bytes(userLevel.label)) == keccak256(bytes(label))) {
-                //TODO what if you are eligible for multiple discounts? go for the top tier
-                //TODO double check that this calculation can achieve the discount by price e.g. price * 0.1 for a 10% discount
-                bid.amount *= currentDiscount.discount.value;
-                emit DiscountApplied(tokenId, bid.bidder, currentDiscount);
-                break;
-            }
+        Discount memory discount = _calculateDiscount(tokenId, bid.bidder);
+        if (discount.discount.value != 0) {
+            // apply discount but preserve original bidSPENDValue for comparing against the ask
+            // TODO the discount is applied to the bid but there is no assurance that the bidder will win the listing
+            bid.amount.mul(discount.discount.value);
+            emit DiscountApplied(tokenId, bid.bidder, discount);
         }
         // If a bid meets the criteria for an ask, automatically accept the bid.
         // If no ask is set or the bid does not meet the requirements, ignore.
@@ -231,6 +219,39 @@ contract Market is IMarket {
             // Finalize exchange
             _finalizeTransfer(tokenId, bid.bidder);
         }
+    }
+
+    /**
+     * @notice calculates the discount applicable to a listing for a given bidder
+     */
+    function _calculateDiscount(uint256 tokenId, address bidder)
+        internal
+        view
+        returns (Discount memory)
+    {
+        Discount memory discount;
+        for (uint256 i = 0; i < _discounts[tokenId].length; i++) {
+            Discount memory currentDiscount = _discounts[tokenId][i];
+            string memory label = currentDiscount.levelRequired.levelLabel;
+            address token = currentDiscount.levelRequired.token;
+            uint256 userBalance = IERC20(token).balanceOf(bidder);
+            address registrar = currentDiscount.levelRequired.registrar;
+            address merchant = currentDiscount.levelRequired.merchant;
+            ILevelRegistrar.Level memory userLevel =
+                ILevelRegistrar(registrar).getLevelByBalance(
+                    merchant,
+                    token,
+                    userBalance
+                );
+            if (keccak256(bytes(userLevel.label)) == keccak256(bytes(label))) {
+                //TODO what if you are eligible for multiple discounts? go for the top tier
+                //TODO double check that this calculation can achieve the discount by price e.g. price * 0.1 for a 10% discount
+                if (currentDiscount.discount.value > discount.discount.value) {
+                    discount = currentDiscount;
+                }
+            }
+        }
+        return discount;
     }
 
     /**

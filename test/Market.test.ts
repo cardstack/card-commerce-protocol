@@ -60,6 +60,18 @@ describe('Market', () => {
     amount: 100
   };
 
+  const defaultLevelRequirement: LevelRequirement = {
+    merchant: deployerWallet.address,
+    registrar: mockTokenWallet.address,
+    token: mockTokenWallet.address,
+    levelLabel: "noob"
+  }
+
+  const defaultDiscount: Discount = {
+    levelRequired: null,
+    discount: { value: 1 }
+  }
+
   let auctionAddress: string;
   let exchangeAddress: string;
   let levelRegistrarAddress: string;
@@ -278,21 +290,52 @@ describe('Market', () => {
 
   });
 
-  describe("#setDiscount", () => {
+  describe("#setLevelRequirements", () => {
 
     let currency;
 
-    const defaultLevelRequirement: LevelRequirement = {
-        merchant: deployerWallet.address,
-        registrar: mockTokenWallet.address,
-        token: mockTokenWallet.address,
-        levelLabel: "noob"
-    }
+    beforeEach(async () => {
+      await deploy();
+      await configure();
+      currency = await deployCurrency();
+      defaultLevelRequirement.token = currency;
+      defaultLevelRequirement.registrar = levelRegistrarAddress;
+      defaultLevelRequirement.merchant = otherWallet.address;
+    });
 
-    const defaultDiscount: Discount = {
-      levelRequired: null,
-      discount: { value: 1 }
-    }
+    it("should not be able to set a level requirement if the level does not exist", async() => {
+      const auction = await auctionAs(mockTokenWallet);
+      await expect(auction.setLevelRequirement(defaultTokenId, defaultLevelRequirement, otherWallet.address, currency)).rejectedWith("Market: level does not exist");
+    });
+
+    it("should be able to set a level requirement", async() => {
+      const auction = await auctionAs(mockTokenWallet);
+      const registrar = await levelRegistrarAs(otherWallet);
+      await registrar.setLevels([{label: "noob", threshold: 0}], currency);
+      await expect(auction.setLevelRequirement(defaultTokenId, defaultLevelRequirement, otherWallet.address, currency));
+    });
+
+    it("should prevent a bid if the level requirement is not met", async() => {
+      const auction = await auctionAs(mockTokenWallet);
+      const registrar = await levelRegistrarAs(otherWallet);
+      await registrar.setLevels([{label: "noob", threshold: 1000000}], currency);
+      await auction.setLevelRequirement(defaultTokenId, defaultLevelRequirement, otherWallet.address, currency);
+      await configureItems(currency, deployerWallet);
+      await mintCurrency(currency, bidderWallet.address, 500);
+      await approveCurrency(currency, auction.address, bidderWallet);
+      await expect(auction.setBid(defaultTokenId, {
+          amount: 10,
+          currency: currency,
+          bidder: bidderWallet.address,
+          recipient: otherWallet.address
+        }, bidderWallet.address)).rejectedWith("Market: bidder does not meet the level requirement");
+    });
+
+  });
+
+  describe("#setDiscount", () => {
+
+    let currency;
 
     beforeEach(async () => {
       await deploy();

@@ -334,7 +334,13 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
         uint256 tokenId,
         IMarket.Discount memory discount,
         address merchant
-    ) public override nonReentrant onlyApprovedOrOwner(msg.sender, tokenId) {
+    )
+        public
+        override
+        nonReentrant
+        onlyExistingToken(tokenId)
+        onlyApprovedOrOwner(msg.sender, tokenId)
+    {
         IMarket(marketContract).setDiscount(tokenId, discount, merchant);
     }
 
@@ -345,6 +351,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
         public
         override
         nonReentrant
+        onlyExistingToken(tokenId)
         onlyApprovedOrOwner(msg.sender, tokenId)
     {
         require(
@@ -362,7 +369,13 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
         IMarket.LevelRequirement memory levelRequirement,
         address merchant,
         address token
-    ) public override nonReentrant onlyApprovedOrOwner(msg.sender, tokenId) {
+    )
+        public
+        override
+        nonReentrant
+        onlyExistingToken(tokenId)
+        onlyApprovedOrOwner(msg.sender, tokenId)
+    {
         IMarket(marketContract).setLevelRequirement(
             tokenId,
             levelRequirement,

@@ -12,10 +12,9 @@ contract LevelRegistrar is ILevelRegistrar {
         public
         override
     {
-        uint256 crossLevelLength = getCrossLevelLength(msg.sender);
         //TODO this could be a gas bottleneck, might be better to simply modify the indices rather than blanking it and restarting
-        _clearCrossLevels(msg.sender, crossLevelLength);
-        for (uint256 i = 0; i < crossLevelLength; i++) {
+        _clearCrossLevels(msg.sender);
+        for (uint256 i = 0; i < crossLevelsToSet.length; i++) {
             crossLevels[msg.sender].push(crossLevelsToSet[i]);
         }
     }
@@ -54,12 +53,9 @@ contract LevelRegistrar is ILevelRegistrar {
     /*
      * @dev helper function to clear the cross levels for re assignment
      * @param merchant - address of the merchant who set the levels
-     * @param crossLevelLength - the length of the array to delete
      */
-    function _clearCrossLevels(address merchant, uint256 crossLevelLength)
-        internal
-    {
-        for (uint256 i = 0; i < crossLevelLength; i++) {
+    function _clearCrossLevels(address merchant) internal {
+        for (uint256 i = 0; i < crossLevels[merchant].length; i++) {
             delete crossLevels[merchant][i];
         }
     }

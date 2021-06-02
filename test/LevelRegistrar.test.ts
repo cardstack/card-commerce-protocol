@@ -6,6 +6,7 @@ import { generatedWallets } from '../utils/generatedWallets';
 import { BaseErc20Factory } from '../typechain/BaseErc20Factory';
 import { LevelRegistrar } from '../typechain/LevelRegistrar';
 import {BaseErc20, LevelRegistrarFactory} from "../typechain";
+import {Wallet} from "ethers";
 
 chai.use(asPromised);
 
@@ -60,8 +61,8 @@ describe('Level Registrar', () => {
         return new BaseErc20Factory(deployerWallet).deploy("Test Token", "TEST", 18);
     }
 
-    async function configure() {
-        return LevelRegistrarFactory.connect(levelRegistrarAddress, deployerWallet)
+    async function registrarAs(wallet: Wallet) {
+        return LevelRegistrarFactory.connect(levelRegistrarAddress, wallet)
     }
 
     describe('#constructor', () => {
@@ -77,7 +78,7 @@ describe('Level Registrar', () => {
 
         beforeEach(async () => {
             await deploy();
-            levelRegistrarContract = await configure();
+            levelRegistrarContract = await registrarAs(deployerWallet);
             erc20 = await createERC20();
         });
 
@@ -159,7 +160,7 @@ describe('Level Registrar', () => {
 
         beforeEach(async () => {
             await deploy();
-            levelRegistrarContract = await configure();
+            levelRegistrarContract = await registrarAs(deployerWallet);
             erc20 = await createERC20();
         });
 

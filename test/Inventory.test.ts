@@ -930,6 +930,8 @@ describe('Inventory', () => {
 
   describe('#setItems', async() => {
 
+    let currency;
+
     beforeEach(async () => {
       await deploy();
       await mint(
@@ -939,21 +941,22 @@ describe('Inventory', () => {
           otherContentHashBytes,
           metadataHashBytes
       );
+      currency = await deployCurrency();
     });
 
     it('should revert if the token id does not exist', async () => {
-      await expect(setItems(tokenAddress, 100)).rejectedWith('Inventory: nonexistent token');
+      await expect(setItems(currency, 100)).rejectedWith('Inventory: nonexistent token');
     });
 
     it("should not be able to set items if not approved or merchant", async() => {
-      await expect(setItems(tokenAddress, 0, otherWallet)).rejectedWith('Inventory: only approved or owner');
+      await expect(setItems(currency, 0, otherWallet)).rejectedWith('Inventory: Only approved or owner');
     });
 
     it("should be able to set items if approved or merchant", async() => {
       const token = await tokenAs(merchantWallet);
       await token.approve(otherWallet.address, 0);
-      await expect(setItems(token.address, 0, otherWallet)).fulfilled;
-      await expect(setItems(token.address, 0, merchantWallet)).fulfilled;
+      await expect(setItems(currency, 0, otherWallet)).fulfilled;
+      await expect(setItems(currency, 0, merchantWallet)).fulfilled;
     });
   });
 

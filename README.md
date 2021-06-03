@@ -24,8 +24,9 @@ CardPay is a social commerce platform that leverages EVM based blockchains to pr
 
 ## Contracts
 
-- `MarketPlace.sol` - the contract that facilitates buying and selling of listings on the platform
-- `Media.sol` - an ERC721 compliant contract that mints the listing NFTs and proxies calls to the market place
+- `Market.sol` - the contract that facilitates buying and selling of listings on the platform
+- `Inventory.sol` - an ERC721 compliant contract that mints the listing NFTs and proxies calls to the market
+- `LevelRegistrar.sol` - the contract that allows merchants to set "levels" representing a user's holdings
 
 ## Token standards used
 
@@ -56,7 +57,6 @@ CardPay is a social commerce platform that leverages EVM based blockchains to pr
 This protocol extends the ERC721 standard with each listing represented by an NFT. The listing NFT itself only represents the item(s) being sold.
 
 ![overview](./diagrams/protocol.png)
-
 The following structs are used in the marketplace to facilitate the buying and selling of items on the platform:
 
 ```solidity

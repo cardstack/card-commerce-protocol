@@ -12,7 +12,6 @@ contract LevelRegistrar is ILevelRegistrar {
         public
         override
     {
-        //TODO this could be a gas bottleneck, might be better to simply modify the indices rather than blanking it and restarting
         _clearCrossLevels(msg.sender);
         for (uint256 i = 0; i < crossLevelsToSet.length; i++) {
             crossLevels[msg.sender].push(crossLevelsToSet[i]);
@@ -27,7 +26,6 @@ contract LevelRegistrar is ILevelRegistrar {
         override
     {
         uint256 levelLength = getLevelLength(msg.sender, token);
-        //TODO this could be a gas bottleneck, might be better to simply modify the indices rather than blanking it and restarting
         _clearLevels(msg.sender, token, levelLength);
         for (uint256 i = 0; i < levelsToSet.length; i++) {
             levels[msg.sender][token].push(levelsToSet[i]);

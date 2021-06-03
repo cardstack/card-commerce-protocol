@@ -1,7 +1,5 @@
 # CardPay-contracts
 
-The repo containing the smart contracts for the CardPay protocol
-
 ## Description
 
 CardPay is a social commerce platform that leverages EVM based blockchains to provide a marketplace for merchants and buyers to purchase digital items using cryptocurrency and fiat.
@@ -149,9 +147,7 @@ A merchant can choose to burn their listing NFT. This will refund the deposited 
 
 ### Ask
 
-A merchant can set an ask at any time. This will allow bids that match the criteria to be automatically approved. A merchant is free to modify this ask at any time.
-
-TODO figure out how we can fulfil an ask requirement with SPEND as the yardstick e.g. merchant accepts 100 SPEND for an item which can be payable in any currency so long as it matches the SPEND denomination at the time. Note: we need to be able to get the exact rate on purchase tx.
+A merchant can set an ask at any time. This will allow bids that match the criteria to be automatically approved. A merchant is free to modify this ask at any time. The ask is priced in SPEND and any currency that has a SPEND value can be used for fulfilling the ask.
 
 ### Accept bid
 
@@ -175,7 +171,7 @@ A merchant can set a level requirement for a listing at any time. A level corres
 
 ### Set a discount based on a level
 
-A merchant can set a discount based on the buyers level in a particular token. E.g. 10% off if you own at least 10 FAN tokens. This discount will be applied on the bid being accepted. TODO what if the merchant changes the discount later?
+A merchant can set a discount based on the buyers level in a particular token. E.g. 10% off if you are a power user of RAC. This discount will be applied on the bid being accepted.
 
 ## Merchant flows
 

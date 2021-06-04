@@ -44,7 +44,7 @@ contract LevelRegistrar is ILevelRegistrar {
         uint256 levelLength
     ) internal {
         for (uint256 i = 0; i < levelLength; i++) {
-            delete levels[msg.sender][token][i];
+            delete levels[merchant][token][i];
         }
     }
 
@@ -69,7 +69,7 @@ contract LevelRegistrar is ILevelRegistrar {
         uint256 levelLength = getLevelLength(merchant, token);
         Level memory levelByBalance;
         for (uint256 i = 0; i < levelLength; i++) {
-            Level memory level = levels[msg.sender][token][i];
+            Level memory level = levels[merchant][token][i];
             if (balance < level.threshold) {
                 break;
             }
@@ -89,7 +89,7 @@ contract LevelRegistrar is ILevelRegistrar {
     ) public view override returns (uint256) {
         uint256 levelLength = getLevelLength(merchant, token);
         for (uint256 i = 0; i < levelLength; i++) {
-            Level memory level = levels[msg.sender][token][i];
+            Level memory level = levels[merchant][token][i];
             if (keccak256(bytes(level.label)) == keccak256(bytes(label))) {
                 return level.threshold;
             }

@@ -41,7 +41,7 @@ type Discount = {
 }
 
 type LevelRequirement = {
-  merchant: string;
+  setter: string;
   registrar: string;
   token: string;
   levelLabel: string;
@@ -61,7 +61,7 @@ describe('Market', () => {
   };
 
   const defaultLevelRequirement: LevelRequirement = {
-    merchant: deployerWallet.address,
+    setter: deployerWallet.address,
     registrar: mockTokenWallet.address,
     token: mockTokenWallet.address,
     levelLabel: "noob"
@@ -300,7 +300,7 @@ describe('Market', () => {
       currency = await deployCurrency();
       defaultLevelRequirement.token = currency;
       defaultLevelRequirement.registrar = levelRegistrarAddress;
-      defaultLevelRequirement.merchant = otherWallet.address;
+      defaultLevelRequirement.setter = otherWallet.address;
     });
 
     it("should not be able to set a level requirement if the level does not exist", async() => {

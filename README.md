@@ -95,8 +95,8 @@ struct Discount {
 }
 
 struct LevelRequirement {
-  // the address of the merchant who set this level requirement
-  address merchant;
+  // the address of the user who set this level requirement
+  address setter;
   // the address of the registrar contract that records the levels
   address registrar;
   // address of the token
@@ -117,8 +117,8 @@ struct CrossLevel {
   string globalLevelLabel;
   // the levels that fall under this globally set level e.g. united ruby, air NZ gold etc.
   string[] recognisedLevelsByLabel;
-  // the addresses of the merchants who set the recognised levels
-  address[] merchants;
+  // the addresses of the users who set the recognised levels
+  address[] setters;
   // the addresses of the tokens that the merchants set a level to
   address[] tokens;
 }

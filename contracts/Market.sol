@@ -144,7 +144,7 @@ contract Market is IMarket {
 
         uint256 requiredBalance =
             ILevelRegistrar(levelRequired.registrar).getRequiredBalanceByLabel(
-                levelRequired.merchant,
+                levelRequired.setter,
                 levelRequired.token,
                 levelRequired.levelLabel
             );
@@ -235,7 +235,7 @@ contract Market is IMarket {
             address token = currentDiscount.levelRequired.token;
             uint256 userBalance = IERC20(token).balanceOf(bidder);
             address registrar = currentDiscount.levelRequired.registrar;
-            address merchant = currentDiscount.levelRequired.merchant;
+            address merchant = currentDiscount.levelRequired.setter;
             ILevelRegistrar.Level memory userLevel =
                 ILevelRegistrar(registrar).getLevelByBalance(
                     merchant,
@@ -307,7 +307,7 @@ contract Market is IMarket {
         require(
             ILevelRegistrar(discount.levelRequired.registrar)
                 .getHasLevelByLabel(
-                discount.levelRequired.merchant,
+                discount.levelRequired.setter,
                 discount.levelRequired.token,
                 discount.levelRequired.levelLabel
             ),

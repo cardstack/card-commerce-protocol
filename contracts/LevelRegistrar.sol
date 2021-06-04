@@ -5,7 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ILevelRegistrar.sol";
 
 contract LevelRegistrar is ILevelRegistrar {
-    mapping(address => mapping(address => Level[])) public levels; // merchant => token address => Level[]
+    mapping(address => mapping(address => Level[])) public levels; // setter => token address => Level[]
     mapping(address => CrossLevel[]) public crossLevels;
 
     function setCrossLevel(CrossLevel[] memory crossLevelsToSet)
@@ -34,27 +34,27 @@ contract LevelRegistrar is ILevelRegistrar {
 
     /*
      * @dev helper function to clear the levels for re assignment
-     * @param merchant - address of the merchant who set the levels
+     * @param setter - address of the user who set the levels
      * @param token - the contract address of the token
      * @param levelLength - the length of the array to delete
      */
     function _clearLevels(
-        address merchant,
+        address setter,
         address token,
         uint256 levelLength
     ) internal {
         for (uint256 i = 0; i < levelLength; i++) {
-            delete levels[merchant][token][i];
+            delete levels[setter][token][i];
         }
     }
 
     /*
      * @dev helper function to clear the cross levels for re assignment
-     * @param merchant - address of the merchant who set the levels
+     * @param setter - address of the user who set the levels
      */
-    function _clearCrossLevels(address merchant) internal {
-        for (uint256 i = 0; i < crossLevels[merchant].length; i++) {
-            delete crossLevels[merchant][i];
+    function _clearCrossLevels(address setter) internal {
+        for (uint256 i = 0; i < crossLevels[setter].length; i++) {
+            delete crossLevels[setter][i];
         }
     }
 
@@ -62,14 +62,14 @@ contract LevelRegistrar is ILevelRegistrar {
      * @dev see ILevelRegistrar.sol
      */
     function getLevelByBalance(
-        address merchant,
+        address setter,
         address token,
         uint256 balance
     ) public view override returns (Level memory) {
-        uint256 levelLength = getLevelLength(merchant, token);
+        uint256 levelLength = getLevelLength(setter, token);
         Level memory levelByBalance;
         for (uint256 i = 0; i < levelLength; i++) {
-            Level memory level = levels[merchant][token][i];
+            Level memory level = levels[setter][token][i];
             if (balance < level.threshold) {
                 break;
             }
@@ -83,13 +83,13 @@ contract LevelRegistrar is ILevelRegistrar {
      * @dev see ILevelRegistrar.sol
      */
     function getRequiredBalanceByLabel(
-        address merchant,
+        address setter,
         address token,
         string memory label
     ) public view override returns (uint256) {
-        uint256 levelLength = getLevelLength(merchant, token);
+        uint256 levelLength = getLevelLength(setter, token);
         for (uint256 i = 0; i < levelLength; i++) {
-            Level memory level = levels[merchant][token][i];
+            Level memory level = levels[setter][token][i];
             if (keccak256(bytes(level.label)) == keccak256(bytes(label))) {
                 return level.threshold;
             }
@@ -102,13 +102,13 @@ contract LevelRegistrar is ILevelRegistrar {
      * @dev see ILevelRegistrar.sol
      */
     function getHasLevelByLabel(
-        address merchant,
+        address setter,
         address token,
         string memory levelLabel
     ) public view override returns (bool) {
-        uint256 length = getLevelLength(merchant, token);
+        uint256 length = getLevelLength(setter, token);
         for (uint256 i = 0; i < length; i++) {
-            Level memory currentLevel = levels[merchant][token][i];
+            Level memory currentLevel = levels[setter][token][i];
             if (
                 keccak256(bytes(currentLevel.label)) ==
                 keccak256(bytes(levelLabel))
@@ -124,51 +124,51 @@ contract LevelRegistrar is ILevelRegistrar {
      * @dev see ILevelRegistrar.sol
      */
     function getUserLevel(
-        address merchant,
+        address setter,
         address token,
         address user
     ) public view override returns (Level memory) {
         IERC20 erc20 = IERC20(token);
         uint256 balance = erc20.balanceOf(user);
 
-        return getLevelByBalance(merchant, token, balance);
+        return getLevelByBalance(setter, token, balance);
     }
 
     /*
      * @dev see ILevelRegistrar.sol
      */
-    function getLevelLength(address merchant, address token)
+    function getLevelLength(address setter, address token)
         public
         view
         override
         returns (uint256)
     {
-        return levels[merchant][token].length;
+        return levels[setter][token].length;
     }
 
     /*
      * @dev see ILevelRegistrar.sol
      */
-    function getCrossLevelLength(address merchant)
+    function getCrossLevelLength(address setter)
         public
         view
         override
         returns (uint256)
     {
-        return crossLevels[merchant].length;
+        return crossLevels[setter].length;
     }
 
     /*
      * @dev see ILevelRegistrar.sol
      */
     function getHasLevel(
-        address merchant,
+        address setter,
         address token,
         Level memory level
     ) public view override returns (bool) {
-        uint256 length = getLevelLength(merchant, token);
+        uint256 length = getLevelLength(setter, token);
         for (uint256 i = 0; i < length; i++) {
-            Level memory currentLevel = levels[merchant][token][i];
+            Level memory currentLevel = levels[setter][token][i];
             if (
                 keccak256(
                     abi.encodePacked(currentLevel.label, currentLevel.threshold)

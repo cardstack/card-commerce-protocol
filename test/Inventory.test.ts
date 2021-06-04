@@ -883,7 +883,7 @@ describe('Inventory', () => {
   describe('#setDiscount', async() => {
 
     const defaultLevelRequirement = {
-      merchant: merchantWallet.address,
+      setter: merchantWallet.address,
       registrar: undefined,
       token: undefined,
       levelLabel: "noob"
@@ -963,7 +963,7 @@ describe('Inventory', () => {
   describe("#setLevelRequirements", () => {
 
     const defaultLevelRequirement = {
-      merchant: deployerWallet.address,
+      setter: deployerWallet.address,
       registrar: undefined,
       token: undefined,
       levelLabel: "noob"

@@ -46,8 +46,8 @@ interface IMarket {
 
     // we don't put the level struct in here because this level requirement needs to dynamically change if the level label gets set to a new threshold
     struct LevelRequirement {
-        // the address of the merchant who set this level requirement
-        address merchant;
+        // the address of the user who set this level requirement
+        address setter;
         // the address of the registrar contract that records the levels
         address registrar;
         // address of the token

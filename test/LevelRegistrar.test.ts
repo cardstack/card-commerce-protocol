@@ -21,7 +21,7 @@ type Level = {
 type CrossLevel = {
     globalLevelLabel: string;
     recognisedLevelsByLabel: string[];
-    merchants: string[];
+    setters: string[];
     tokens: string[];
 }
 
@@ -44,7 +44,7 @@ describe('Level Registrar', () => {
     const defaultCrossLevel: CrossLevel = {
         globalLevelLabel: "Star alliance gold",
         recognisedLevelsByLabel: ["Air NZ premium", "United Gold"],
-        merchants: [deployerWallet.address, otherWallet.address],
+        setters: [deployerWallet.address, otherWallet.address],
         tokens: [deployerWallet.address, otherWallet.address]
     }
 

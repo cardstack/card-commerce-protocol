@@ -910,20 +910,20 @@ describe('Inventory', () => {
 
     it('should revert if the token id does not exist', async () => {
       const token = await tokenAs(merchantWallet);
-      await expect(token.setDiscount(100, defaultDiscount, merchantWallet.address)).rejectedWith('Inventory: nonexistent token');
+      await expect(token.setDiscount(100, defaultDiscount)).rejectedWith('Inventory: nonexistent token');
     });
 
     it("should not be able to set a discount if not approved or merchant", async() => {
       const token = await tokenAs(otherWallet);
-      await expect(token.setDiscount(0, defaultDiscount, merchantWallet.address)).rejectedWith('Inventory: Only approved or owner');
+      await expect(token.setDiscount(0, defaultDiscount)).rejectedWith('Inventory: Only approved or owner');
     });
 
     it("should be able to set a discount if approved or merchant", async() => {
       const token = await tokenAs(merchantWallet);
-      await expect(token.setDiscount(0, defaultDiscount, merchantWallet.address)).fulfilled;
+      await expect(token.setDiscount(0, defaultDiscount)).fulfilled;
       await token.approve(otherWallet.address, 0);
       const tokenAsOtherWallet = await tokenAs(otherWallet);
-      await expect(tokenAsOtherWallet.setDiscount(0, defaultDiscount, merchantWallet.address)).fulfilled;
+      await expect(tokenAsOtherWallet.setDiscount(0, defaultDiscount)).fulfilled;
     });
 
   });

@@ -299,11 +299,11 @@ contract Market is IMarket {
         _finalizeTransfer(tokenId, bid.bidder);
     }
 
-    function setDiscount(
-        uint256 tokenId,
-        Discount memory discount,
-        address merchant
-    ) public override onlyInventoryCaller {
+    function setDiscount(uint256 tokenId, Discount memory discount)
+        public
+        override
+        onlyInventoryCaller
+    {
         require(
             ILevelRegistrar(discount.levelRequired.registrar)
                 .getHasLevelByLabel(

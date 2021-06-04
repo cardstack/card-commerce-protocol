@@ -75,11 +75,8 @@ interface IInventory {
     /**
      * @notice set a discount based on a particular level
      */
-    function setDiscount(
-        uint256 tokenId,
-        IMarket.Discount calldata discount,
-        address merchant
-    ) external;
+    function setDiscount(uint256 tokenId, IMarket.Discount calldata discount)
+        external;
 
     /**
      * @notice set a level requirement for the buyers e.g. must own 100 FAN to buy

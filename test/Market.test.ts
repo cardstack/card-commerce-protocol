@@ -348,14 +348,14 @@ describe('Market', () => {
 
     it('should not be able to set a discount due to the level being absent', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await expect(auction.setDiscount(0, defaultDiscount, otherWallet.address)).rejectedWith("Market: level does not exist");
+      await expect(auction.setDiscount(0, defaultDiscount)).rejectedWith("Market: level does not exist");
     });
 
     it('should set a discount by the Merchant', async () => {
       const auction = await auctionAs(mockTokenWallet);
       const levelRegistrar = await levelRegistrarAs(deployerWallet);
       await levelRegistrar.setLevels([{ label: "noob", threshold: 100 }], currency);
-      await expect(auction.setDiscount(0, defaultDiscount, otherWallet.address)).fulfilled;
+      await expect(auction.setDiscount(0, defaultDiscount)).fulfilled;
       const block = await provider.getBlockNumber();
       const events = await auction.queryFilter(
           auction.filters.DiscountSet(0, null),
@@ -368,7 +368,7 @@ describe('Market', () => {
       const auction = await auctionAs(mockTokenWallet);
       const levelRegistrar = await levelRegistrarAs(deployerWallet);
       await levelRegistrar.setLevels([{ label: "noob", threshold: 100 }], currency);
-      await auction.setDiscount(1, defaultDiscount, otherWallet.address);
+      await auction.setDiscount(1, defaultDiscount);
       await configureItems(currency, otherWallet);
       await auction.setAsk(1, { amount: 100 });
       await mintCurrency(currency, bidderWallet.address, 1000);
@@ -383,7 +383,7 @@ describe('Market', () => {
       const auction = await auctionAs(mockTokenWallet);
       const levelRegistrar = await levelRegistrarAs(deployerWallet);
       await levelRegistrar.setLevels([{ label: "pro", threshold: 100000000 }], currency);
-      await auction.setDiscount(1, proDiscount, otherWallet.address);
+      await auction.setDiscount(1, proDiscount);
       await configureItems(currency, otherWallet);
       await auction.setAsk(1, { amount: 100 });
       await mintCurrency(currency, bidderWallet.address, 1000);

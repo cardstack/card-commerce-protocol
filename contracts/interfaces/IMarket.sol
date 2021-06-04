@@ -92,11 +92,7 @@ interface IMarket {
 
     function setItems(uint256 tokenId, Items calldata items) external;
 
-    function setDiscount(
-        uint256 tokenId,
-        Discount calldata discount,
-        address merchant
-    ) external;
+    function setDiscount(uint256 tokenId, Discount calldata discount) external;
 
     function setLevelRequirement(
         uint256 tokenId,

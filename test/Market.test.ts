@@ -11,6 +11,7 @@ import {BaseErc20Factory} from '../typechain/BaseErc20Factory';
 import {Market} from '../typechain/Market';
 import {ExchangeMockFactory} from '../typechain/ExchangeMockFactory';
 import {LevelRegistrarFactory} from "../typechain";
+import Decimal from "../utils/Decimal";
 
 chai.use(asPromised);
 
@@ -69,7 +70,7 @@ describe('Market', () => {
 
   const defaultDiscount: Discount = {
     levelRequired: null,
-    discount: { value: 1 }
+    discount: Decimal.new(10)
   }
 
   let auctionAddress: string;
@@ -373,8 +374,13 @@ describe('Market', () => {
       await auction.setAsk(1, { amount: 100 });
       await mintCurrency(currency, bidderWallet.address, 1000);
       await approveCurrency(currency, auction.address, bidderWallet);
+      const beforeBalance = await getBalance(currency, bidderWallet.address);
       await auction.setBid(1, { amount: 100, currency: currency, bidder: bidderWallet.address, recipient: mockTokenWallet.address}, bidderWallet.address);
-      expect(await getBalance(currency, otherWallet.address)).eq(899, "discount of 1 should be applied");
+      const afterBalance = await getBalance(currency, bidderWallet.address);
+      const bidMinusDiscount = 90;
+      // user gets 1k tokens back from successful bid as well
+      const itemFromMerchantAmount = 1000;
+      expect(afterBalance.toNumber()).eq((beforeBalance.toNumber() - bidMinusDiscount) + itemFromMerchantAmount, "discount of 10% should be applied");
     });
 
     it("should not apply a discount if the buyer is not eligible", async() => {

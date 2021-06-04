@@ -187,6 +187,14 @@ contract Market is IMarket {
             removeBid(tokenId, bid.bidder);
         }
 
+        // Check if eligible for any discounts and apply if applicable
+        Discount memory discount = _getDiscount(tokenId, bid.bidder);
+        if (discount.discount.value > 0) {
+            // apply discount but preserve original bidSPENDValue for comparing against the ask
+            bid.amount -= Decimal.mul(bid.amount, discount.discount).div(100);
+            emit DiscountApplied(tokenId, bid.bidder, discount);
+        }
+
         IERC20 token = IERC20(bid.currency);
 
         // We must check the balance that was actually transferred to the market,
@@ -202,13 +210,6 @@ contract Market is IMarket {
             bid.recipient
         );
         emit BidCreated(tokenId, bid);
-        //check if eligible for any discounts
-        Discount memory discount = _getDiscount(tokenId, bid.bidder);
-        if (discount.discount.value != 0) {
-            // apply discount but preserve original bidSPENDValue for comparing against the ask
-            bid.amount -= Decimal.mul(bid.amount, discount.discount).div(100);
-            emit DiscountApplied(tokenId, bid.bidder, discount);
-        }
         // If a bid meets the criteria for an ask, automatically accept the bid.
         // If no ask is set or the bid does not meet the requirements, ignore.
         if (

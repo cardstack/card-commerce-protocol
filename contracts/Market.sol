@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0
-
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
@@ -12,12 +11,14 @@ import {Inventory} from "./Inventory.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 import {ILevelRegistrar} from "./interfaces/ILevelRegistrar.sol";
 import {IExchange} from "./interfaces/IExchange.sol";
+import {Safe} from "./Safe.sol";
+import {IERC677} from "./interfaces/IERC677.sol";
 
 /**
  * @title A Market for pieces of media
  * @notice This contract contains all of the market logic for Media
  */
-contract Market is IMarket {
+contract Market is IMarket, Safe {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -26,16 +27,19 @@ contract Market is IMarket {
      * *******
      */
     // Address of the inventory contract that can call this market
-    address public inventoryContract;
+    address public inventoryContractAddress;
 
     // Address for the SPEND conversion contract
-    address public exchangeSPENDContract;
+    address public exchangeSPENDContractAddress;
 
     // Deployment Address
     address private _owner;
 
     // Mapping from token to mapping from bidder to bid
     mapping(uint256 => mapping(address => Bid)) private _tokenBidders;
+
+    // Mapping from the users address to their safe
+    mapping(address => address) private _safes;
 
     // Mapping from token to the current ask for the token
     mapping(uint256 => Ask) private _tokenAsks;
@@ -59,7 +63,7 @@ contract Market is IMarket {
      */
     modifier onlyInventoryCaller() {
         require(
-            inventoryContract == msg.sender,
+            inventoryContractAddress == msg.sender,
             "Market: Only inventory contract"
         );
         _;
@@ -101,18 +105,21 @@ contract Market is IMarket {
      * can call the mutable functions. This method can only be called once.
      */
     function configure(
-        address inventoryContractAddress,
-        address exchangeSPENDAddr
+        address _inventoryContractAddress,
+        address _exchangeSPENDAddr
     ) external override {
         require(msg.sender == _owner, "Market: Only owner");
-        require(inventoryContract == address(0), "Market: Already configured");
         require(
-            inventoryContractAddress != address(0),
+            inventoryContractAddress == address(0),
+            "Market: Already configured"
+        );
+        require(
+            _inventoryContractAddress != address(0),
             "Market: cannot set media contract as zero address"
         );
-        exchangeSPENDContract = exchangeSPENDAddr;
 
-        inventoryContract = inventoryContractAddress;
+        inventoryContractAddress = _inventoryContractAddress;
+        exchangeSPENDContractAddress = _exchangeSPENDAddr;
     }
 
     /**
@@ -149,7 +156,7 @@ contract Market is IMarket {
                 levelRequired.levelLabel
             );
         require(
-            IERC20(levelRequired.token).balanceOf(spender) >= requiredBalance,
+            IERC677(levelRequired.token).balanceOf(spender) >= requiredBalance,
             "Market: bidder does not meet the level requirement"
         );
     }
@@ -159,6 +166,7 @@ contract Market is IMarket {
      * is transferred from the spender to this contract to be held until removed or accepted.
      * If another bid already exists for the bidder, it is refunded.
      */
+    // TODO @Hassan -- configure to work from the user's safe rather than an EOA or other kind of contract
     function setBid(
         uint256 tokenId,
         Bid memory bid,
@@ -167,7 +175,7 @@ contract Market is IMarket {
         require(bid.bidder != address(0), "Market: bidder cannot be 0 address");
         require(_items[tokenId].quantity > 0, "Market: No items left for sale");
         uint256 bidSPENDValue =
-            IExchange(address(exchangeSPENDContract)).convertToSpend(
+            IExchange(address(exchangeSPENDContractAddress)).convertToSpend(
                 bid.currency,
                 bid.amount
             );
@@ -178,7 +186,13 @@ contract Market is IMarket {
             "Market: bid recipient cannot be 0 address"
         );
 
-        _checkUserMatchesLevelRequirement(tokenId, spender);
+        // get the bidders safe as this is where the tokens will be sent
+        address bidderSafe = _safes[bid.bidder];
+        if (bidderSafe == address(0)) {
+            bidderSafe = _setUserSafe(bid.bidder);
+        }
+
+        _checkUserMatchesLevelRequirement(tokenId, bidderSafe);
 
         Bid storage existingBid = _tokenBidders[tokenId][bid.bidder];
 
@@ -222,6 +236,17 @@ contract Market is IMarket {
     }
 
     /**
+     * @notice sets a safe to the user if it does not exist
+     * @param user - the address of the user who will be set a safe
+     */
+    function _setUserSafe(address user) internal returns (address) {
+        require(_safes[user] != address(0), "Market: safe already exists");
+        address safe = createSafe(user);
+        _safes[user] = safe;
+        return safe;
+    }
+
+    /**
      * @notice gets the discount applicable to a listing for a given bidder
      */
     function _getDiscount(uint256 tokenId, address bidder)
@@ -234,7 +259,7 @@ contract Market is IMarket {
             Discount memory currentDiscount = _discounts[tokenId][i];
             string memory label = currentDiscount.levelRequired.levelLabel;
             address token = currentDiscount.levelRequired.token;
-            uint256 userBalance = IERC20(token).balanceOf(bidder);
+            uint256 userBalance = IERC677(token).balanceOf(bidder);
             address registrar = currentDiscount.levelRequired.registrar;
             address merchant = currentDiscount.levelRequired.setter;
             ILevelRegistrar.Level memory userLevel =
@@ -267,11 +292,17 @@ contract Market is IMarket {
 
         require(bid.amount > 0, "Market: cannot remove bid amount of 0");
 
-        IERC20 token = IERC20(bidCurrency);
+        // get the bidders safe as this is where the tokens will be sent
+        address bidderSafe = _safes[bidder];
+        if (bidderSafe == address(0)) {
+            bidderSafe = _setUserSafe(bidder);
+        }
+
+        IERC677 token = IERC677(bidCurrency);
 
         emit BidRemoved(tokenId, bid);
         delete _tokenBidders[tokenId][bidder];
-        token.safeTransfer(bidder, bidAmount);
+        token.transferAndCall(bidderSafe, bidAmount, abi.encode(address(this)));
     }
 
     /**
@@ -375,10 +406,10 @@ contract Market is IMarket {
     ) private {
         for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
             require(
-                IERC20(items.tokenAddresses[i]).transferFrom(
-                    from,
+                IERC677(items.tokenAddresses[i]).transferAndCall(
                     to,
-                    items.amounts[i].mul(quantity)
+                    items.amounts[i].mul(quantity),
+                    abi.encode(from)
                 ),
                 "Market: failed to transfer items on behalf of the user"
             );
@@ -395,9 +426,10 @@ contract Market is IMarket {
     ) private {
         for (uint256 i = 0; i < items.tokenAddresses.length; i++) {
             require(
-                IERC20(items.tokenAddresses[i]).transfer(
+                IERC677(items.tokenAddresses[i]).transferAndCall(
                     to,
-                    items.amounts[i].mul(quantity)
+                    items.amounts[i].mul(quantity),
+                    abi.encode(address(this))
                 ),
                 "Market: failed to transfer items from the contract"
             );
@@ -433,20 +465,32 @@ contract Market is IMarket {
     function _finalizeTransfer(uint256 tokenId, address bidder) private {
         Bid memory bid = _tokenBidders[tokenId][bidder];
 
-        IERC20 token = IERC20(bid.currency);
-        // transfer the bid amount to the merchant
-        token.transferFrom(address(this), bid.recipient, bid.amount);
+        IERC677 token = IERC677(bid.currency);
+        // transfer the bid amount to the merchant's safe
+        address merchantSafe = _safes[bid.recipient];
+        if (merchantSafe == address(0)) {
+            merchantSafe = _setUserSafe(bid.recipient);
+        }
+        token.transferAndCall(
+            merchantSafe,
+            bid.amount,
+            abi.encode(bid.recipient)
+        );
 
-        // transfer the items out to the bidder
+        // transfer the items out to the bidder's safe
         Items memory items = _items[tokenId];
-        _transferItems(items, address(this), bid.bidder, 1);
+        address bidderSafe = _safes[bidder];
+        if (bidderSafe == address(0)) {
+            bidderSafe = _setUserSafe(bidder);
+        }
+        _transferItems(items, address(this), bidderSafe, 1);
 
         // reduce the quantity by one as the buyer just purchased one item only
         _items[tokenId].quantity -= 1;
 
         // burn the listing if all the items are sold
         if (_items[tokenId].quantity == 0) {
-            Inventory(inventoryContract).burnListing(tokenId);
+            Inventory(inventoryContractAddress).burnListing(tokenId);
         }
 
         // Remove the accepted bid

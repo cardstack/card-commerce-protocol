@@ -1,16 +1,17 @@
 import chai, {expect} from 'chai';
 import asPromised from 'chai-as-promised';
 import {JsonRpcProvider} from '@ethersproject/providers';
-import {Blockchain} from '../utils/Blockchain';
-import {generatedWallets} from '../utils/generatedWallets';
-import {MarketFactory} from '../typechain/MarketFactory';
+import {Blockchain, generatedWallets} from '../utils';
+import {
+  approveCurrency,
+  deployCurrency,
+  getBalance,
+  mintCurrency
+} from './utils';
 import {BigNumber, BigNumberish, Wallet} from 'ethers';
 import {formatUnits} from '@ethersproject/units';
 import {AddressZero, MaxUint256} from '@ethersproject/constants';
-import {BaseErc20Factory} from '../typechain/BaseErc20Factory';
-import {Market} from '../typechain/Market';
-import {ExchangeMockFactory} from '../typechain/ExchangeMockFactory';
-import {LevelRegistrarFactory} from "../typechain";
+import {Market, MarketFactory, ExchangeMockFactory, LevelRegistrarFactory, GnosisSafeProxyFactory, Erc677Factory} from '../typechain';
 import Decimal from "../utils/Decimal";
 
 chai.use(asPromised);
@@ -76,6 +77,7 @@ describe('Market', () => {
   let auctionAddress: string;
   let exchangeAddress: string;
   let levelRegistrarAddress: string;
+  let gnosisSafeProxyFactoryAddress: string;
 
   function toNumWei(val: BigNumber) {
     return parseFloat(formatUnits(val, 'wei'));
@@ -102,10 +104,21 @@ describe('Market', () => {
     ).deployed();
     const levelRegistrar = await (
         await new LevelRegistrarFactory(deployerWallet).deploy()
-    );
+    ).deployed();
+    const gnosisSafeProxyFactory = await (
+        await new GnosisSafeProxyFactory(deployerWallet).deploy(auction.address)
+    ).deployed();
     levelRegistrarAddress = levelRegistrar.address;
     exchangeAddress = exchange.address;
     auctionAddress = auction.address;
+    gnosisSafeProxyFactoryAddress = gnosisSafeProxyFactory.address;
+  }
+
+  async function setupSafe() {
+    return MarketFactory.connect(auctionAddress, deployerWallet).setup(
+        auctionAddress,
+        gnosisSafeProxyFactoryAddress
+    );
   }
 
   async function configure() {
@@ -134,36 +147,10 @@ describe('Market', () => {
     ).inventoryContract();
   }
 
-  async function setAsk(auction: Market, tokenId: number, ask?: Ask) {
+  function setAsk(auction: Market, tokenId: number, ask?: Ask) {
     return auction.setAsk(tokenId, ask);
   }
 
-  async function deployCurrency() {
-    const currency = await new BaseErc20Factory(deployerWallet).deploy(
-      'test',
-      'TEST',
-      18
-    );
-    return currency.address;
-  }
-
-  async function mintCurrency(currency: string, to: string, value: number) {
-    await BaseErc20Factory.connect(currency, deployerWallet).mint(to, value);
-  }
-
-  async function approveCurrency(
-    currency: string,
-    spender: string,
-    owner: Wallet
-  ) {
-    await BaseErc20Factory.connect(currency, owner).approve(
-      spender,
-      MaxUint256
-    );
-  }
-  async function getBalance(currency: string, owner: string) {
-    return BaseErc20Factory.connect(currency, deployerWallet).balanceOf(owner);
-  }
   async function setBid(
     auction: Market,
     bid: Bid,
@@ -618,7 +605,7 @@ describe('Market', () => {
       await approveCurrency(currency, auction.address, bidderWallet);
 
       const bidderBalance = toNumWei(
-        await BaseErc20Factory.connect(currency, bidderWallet).balanceOf(
+        await Erc677Factory.connect(currency, bidderWallet).balanceOf(
           bidderWallet.address
         )
       );
@@ -633,7 +620,7 @@ describe('Market', () => {
       ).fulfilled;
 
       const afterBalance = toNumWei(
-        await BaseErc20Factory.connect(currency, bidderWallet).balanceOf(
+        await Erc677Factory.connect(currency, bidderWallet).balanceOf(
           bidderWallet.address
         )
       );

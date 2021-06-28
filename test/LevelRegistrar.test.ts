@@ -3,9 +3,7 @@ import asPromised from 'chai-as-promised';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Blockchain } from '../utils/Blockchain';
 import { generatedWallets } from '../utils/generatedWallets';
-import { BaseErc20Factory } from '../typechain/BaseErc20Factory';
-import { LevelRegistrar } from '../typechain/LevelRegistrar';
-import {BaseErc20, LevelRegistrarFactory} from "../typechain";
+import {Erc677, Erc677Factory, LevelRegistrarFactory, LevelRegistrar} from "../typechain";
 import {Wallet} from "ethers";
 
 chai.use(asPromised);
@@ -57,8 +55,13 @@ describe('Level Registrar', () => {
         levelRegistrarAddress = levelRegistrar.address;
     }
 
-    function createERC20() {
-        return new BaseErc20Factory(deployerWallet).deploy("Test Token", "TEST", 18);
+    function createERC677() {
+        return new Erc677Factory(deployerWallet).deploy(
+            deployerWallet.address,
+            10000000000,
+            'test',
+            'TEST'
+        );
     }
 
     async function registrarAs(wallet: Wallet) {
@@ -74,94 +77,94 @@ describe('Level Registrar', () => {
     describe("#levels", () => {
 
         let levelRegistrarContract: LevelRegistrar;
-        let erc20: BaseErc20;
+        let Erc677: Erc677;
 
         beforeEach(async () => {
             await deploy();
             levelRegistrarContract = await registrarAs(deployerWallet);
-            erc20 = await createERC20();
+            Erc677 = await createERC677();
         });
 
         it("should be able to set one level", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel], erc20.address);
+            await levelRegistrarContract.setLevels([defaultLevel], Erc677.address);
         });
 
         it("should be able to set more than one level", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel, proLevel], erc20.address);
+            await levelRegistrarContract.setLevels([defaultLevel, proLevel], Erc677.address);
         });
 
         it("should be able to get a set level", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel], erc20.address);
-            const levelLength = await levelRegistrarContract.getLevelLength(deployerWallet.address, erc20.address);
+            await levelRegistrarContract.setLevels([defaultLevel], Erc677.address);
+            const levelLength = await levelRegistrarContract.getLevelLength(deployerWallet.address, Erc677.address);
             expect(levelLength.toNumber()).eq(1, "should be able to get the set level");
         });
 
         it("should be able to get the level based on a balance", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel], erc20.address);
-            const levelByBalance = await levelRegistrarContract.getLevelByBalance(deployerWallet.address, erc20.address, 0);
+            await levelRegistrarContract.setLevels([defaultLevel], Erc677.address);
+            const levelByBalance = await levelRegistrarContract.getLevelByBalance(deployerWallet.address, Erc677.address, 0);
             expect(levelByBalance.label).eq("noob", "0 balance should be set to noob");
         });
 
         it("should be able to get the required balance by label", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel], erc20.address);
-            const balanceRequired = await levelRegistrarContract.getRequiredBalanceByLabel(deployerWallet.address, erc20.address, "noob");
+            await levelRegistrarContract.setLevels([defaultLevel], Erc677.address);
+            const balanceRequired = await levelRegistrarContract.getRequiredBalanceByLabel(deployerWallet.address, Erc677.address, "noob");
             expect(balanceRequired.toNumber()).eq(0, "required balance for noob should be 0");
         });
 
         it("should be able to get the required balance by label", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel], erc20.address);
-            const hasLabel = await levelRegistrarContract.getHasLevelByLabel(deployerWallet.address, erc20.address, "noob");
+            await levelRegistrarContract.setLevels([defaultLevel], Erc677.address);
+            const hasLabel = await levelRegistrarContract.getHasLevelByLabel(deployerWallet.address, Erc677.address, "noob");
             expect(hasLabel).eq(true, "noob level should exist");
         });
 
         it("should have the level noob", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel], erc20.address);
-            const hasLevel = await levelRegistrarContract.getHasLevel(deployerWallet.address, erc20.address, defaultLevel);
+            await levelRegistrarContract.setLevels([defaultLevel], Erc677.address);
+            const hasLevel = await levelRegistrarContract.getHasLevel(deployerWallet.address, Erc677.address, defaultLevel);
             expect(hasLevel).eq(true, "should have the level noob");
         });
 
         it("should not have the level pro", async () => {
-            const hasLevel = await levelRegistrarContract.getHasLevel(deployerWallet.address, erc20.address, proLevel);
+            const hasLevel = await levelRegistrarContract.getHasLevel(deployerWallet.address, Erc677.address, proLevel);
             expect(hasLevel).eq(false, "should not have the level pro");
         });
 
         it("should be able to get a users level", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel], erc20.address);
-            const userLevel = await levelRegistrarContract.getUserLevel(deployerWallet.address, erc20.address, otherWallet.address);
+            await levelRegistrarContract.setLevels([defaultLevel], Erc677.address);
+            const userLevel = await levelRegistrarContract.getUserLevel(deployerWallet.address, Erc677.address, otherWallet.address);
             expect(userLevel.label).eq("noob", "user with no balance should be a noob");
         });
 
         it("users level should be pro and not noob", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel, proLevel], erc20.address);
-            await erc20.mint(otherWallet.address, 100);
-            const userLevel = await levelRegistrarContract.getUserLevel(deployerWallet.address, erc20.address, otherWallet.address);
+            await levelRegistrarContract.setLevels([defaultLevel, proLevel], Erc677.address);
+            await Erc677.mint(otherWallet.address, 100);
+            const userLevel = await levelRegistrarContract.getUserLevel(deployerWallet.address, Erc677.address, otherWallet.address);
             expect(userLevel.label).to.not.eq("noob", "user is not a noob");
             expect(userLevel.label).eq("pro", "user should be a pro");
         });
 
         it("users level should be pro even though they exceed the threshold", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel, proLevel], erc20.address);
-            await erc20.mint(otherWallet.address, 1000);
-            const userLevel = await levelRegistrarContract.getUserLevel(deployerWallet.address, erc20.address, otherWallet.address);
+            await levelRegistrarContract.setLevels([defaultLevel, proLevel], Erc677.address);
+            await Erc677.mint(otherWallet.address, 1000);
+            const userLevel = await levelRegistrarContract.getUserLevel(deployerWallet.address, Erc677.address, otherWallet.address);
             expect(userLevel.label).eq("pro", "user should be a pro, even with a higher than required balance");
         });
 
         it("should not be able to find the noob level after the levels have been reset", async () => {
-            await levelRegistrarContract.setLevels([defaultLevel, proLevel], erc20.address);
-            await levelRegistrarContract.setLevels([proLevel], erc20.address);
-            const hasLevel = await levelRegistrarContract.getHasLevel(deployerWallet.address, erc20.address, defaultLevel);
+            await levelRegistrarContract.setLevels([defaultLevel, proLevel], Erc677.address);
+            await levelRegistrarContract.setLevels([proLevel], Erc677.address);
+            const hasLevel = await levelRegistrarContract.getHasLevel(deployerWallet.address, Erc677.address, defaultLevel);
             expect(hasLevel).eq(false, "noob level should be erased");
         });
     });
 
     describe("#crossLevels", () => {
         let levelRegistrarContract: LevelRegistrar;
-        let erc20: BaseErc20;
+        let Erc677: Erc677;
 
         beforeEach(async () => {
             await deploy();
             levelRegistrarContract = await registrarAs(deployerWallet);
-            erc20 = await createERC20();
+            Erc677 = await createERC677();
         });
 
         it("Should be able set and get a cross level", async() => {

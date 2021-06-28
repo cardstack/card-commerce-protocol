@@ -1,15 +1,11 @@
 import chai, { expect } from 'chai';
 import asPromised from 'chai-as-promised';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { Blockchain } from '../utils/Blockchain';
-import { generatedWallets } from '../utils/generatedWallets';
-import { MarketFactory } from '../typechain/MarketFactory';
+import { generatedWallets, Blockchain } from '../utils';
 import { ethers, Wallet } from 'ethers';
 import { AddressZero } from '@ethersproject/constants';
-import Decimal from '../utils/Decimal';
-import { BigNumber, BigNumberish, Bytes } from 'ethers';
-import { InventoryFactory } from '../typechain/InventoryFactory';
-import { Inventory } from '../typechain/Inventory';
+import { BigNumberish, Bytes } from 'ethers';
+import { InventoryFactory, Inventory, MarketFactory } from '../typechain';
 import {
   approveCurrency,
   deployCurrency,
@@ -23,12 +19,9 @@ import {
 import {
   arrayify,
   formatBytes32String,
-  formatUnits,
   sha256,
 } from 'ethers/lib/utils';
-import exp from 'constants';
-import {BytesLike} from "@ethersproject/bytes";
-import {ExchangeMock, ExchangeMockFactory, LevelRegistrarFactory} from "../typechain";
+import { ExchangeMockFactory, LevelRegistrarFactory} from "../typechain";
 
 chai.use(asPromised);
 
@@ -100,11 +93,13 @@ describe('Inventory', () => {
   async function tokenAs(wallet: Wallet) {
     return InventoryFactory.connect(tokenAddress, wallet);
   }
+
   async function deploy() {
     const auction = await (
       await new MarketFactory(deployerWallet).deploy()
     ).deployed();
     auctionAddress = auction.address;
+
     const token = await (
       await new InventoryFactory(deployerWallet).deploy(auction.address)
     ).deployed();
@@ -165,24 +160,20 @@ describe('Inventory', () => {
     return token.mintWithSig(creator, data, sig);
   }
 
-  async function setAsk(token: Inventory, tokenId: number, ask: Ask) {
+  function setAsk(token: Inventory, tokenId: number, ask: Ask) {
     return token.setAsk(tokenId, ask);
   }
 
-  async function removeAsk(token: Inventory, tokenId: number) {
+  function removeAsk(token: Inventory, tokenId: number) {
     return token.removeAsk(tokenId);
   }
 
-  async function setBid(token: Inventory, bid: Bid, tokenId: number) {
+  function setBid(token: Inventory, bid: Bid, tokenId: number) {
     return token.setBid(tokenId, bid);
   }
 
-  async function removeBid(token: Inventory, tokenId: number) {
+  function removeBid(token: Inventory, tokenId: number) {
     return token.removeBid(tokenId);
-  }
-
-  async function acceptBid(token: Inventory, tokenId: number, bid: Bid) {
-    return token.acceptBid(tokenId, bid);
   }
 
   async function setItems(currencyAddr: string, tokenId = 0, wallet = merchantWallet) {

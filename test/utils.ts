@@ -1,4 +1,4 @@
-import { BaseErc20Factory, InventoryFactory } from '../typechain';
+import { Erc677Factory, InventoryFactory } from '../typechain';
 import { BigNumber, BigNumberish, Bytes, Wallet } from 'ethers';
 import { MaxUint256, AddressZero } from '@ethersproject/constants';
 import { generatedWallets } from '../utils/generatedWallets';
@@ -22,10 +22,11 @@ let provider = new JsonRpcProvider();
 let [deployerWallet] = generatedWallets(provider);
 
 export async function deployCurrency() {
-  const currency = await new BaseErc20Factory(deployerWallet).deploy(
+  const currency = await new Erc677Factory(deployerWallet).deploy(
+      deployerWallet.address,
+    10000000000,
     'test',
-    'TEST',
-    18
+    'TEST'
   );
   return currency.address;
 }
@@ -35,7 +36,7 @@ export async function mintCurrency(
   to: string,
   value: number
 ) {
-  await BaseErc20Factory.connect(currency, deployerWallet).mint(to, value);
+  await Erc677Factory.connect(currency, deployerWallet).mint(to, value);
 }
 
 export async function approveCurrency(
@@ -43,10 +44,10 @@ export async function approveCurrency(
   spender: string,
   owner: Wallet
 ) {
-  await BaseErc20Factory.connect(currency, owner).approve(spender, MaxUint256);
+  await Erc677Factory.connect(currency, owner).approve(spender, MaxUint256);
 }
 export async function getBalance(currency: string, owner: string) {
-  return BaseErc20Factory.connect(currency, deployerWallet).balanceOf(owner);
+  return Erc677Factory.connect(currency, deployerWallet).balanceOf(owner);
 }
 
 function revert(message: string) {

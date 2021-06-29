@@ -7,7 +7,7 @@
  * It was cloned in order to ensure it imported from the cloned ERC721.sol file. No other modifications have been made.
  */
 
-pragma solidity 0.6.8;
+pragma solidity 0.5.17;
 
 import "@openzeppelin/contracts/GSN/Context.sol";
 import "./ERC721.sol";

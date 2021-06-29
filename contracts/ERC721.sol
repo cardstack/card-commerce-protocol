@@ -12,7 +12,7 @@
  *  - `_approve` visibility was changed from private to internal to support EIP-2612 flavored permits and approval revocation by an approved address
  */
 
-pragma solidity 0.6.8;
+pragma solidity 0.5.17;
 
 import "@openzeppelin/contracts/GSN/Context.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -23,8 +23,8 @@ import "@openzeppelin/contracts/introspection/ERC165.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/EnumerableMap.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "./EnumerableMap.sol";
+import "@openzeppelin/contracts/drafts/Strings.sol";
 
 /**
  * @title ERC721 Non-Fungible Token Standard basic implementation

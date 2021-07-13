@@ -169,6 +169,10 @@ describe('Level Registrar', () => {
             const crossLevelLength = await levelRegistrarContract.getCrossLevelLength(deployerWallet.address);
             expect(crossLevelLength.toNumber()).eq(1);
         });
+
+        it.only("test", async () => {
+            console.log("hi")
+        })
     });
 
 });

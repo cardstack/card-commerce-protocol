@@ -4,8 +4,8 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import { Blockchain } from '../utils/Blockchain';
 import { generatedWallets } from '../utils/generatedWallets';
 import { BaseErc20Factory } from '../typechain/BaseErc20Factory';
-import { LevelRegistrar } from '../typechain/Level';
-import {BaseErc20, LevelRegistrarFactory} from "../typechain";
+import { Level } from '../typechain/Level';
+import {BaseErc20, LevelFactory} from "../typechain";
 import {Wallet} from "ethers";
 
 chai.use(asPromised);
@@ -48,13 +48,13 @@ describe('Level Registrar', () => {
         tokens: [deployerWallet.address, otherWallet.address]
     }
 
-    let levelRegistrarAddress: string;
+    let levelAddress: string;
 
     async function deploy() {
         const levelRegistrar = await (
-            await new LevelRegistrarFactory(deployerWallet).deploy()
+            await new LevelFactory(deployerWallet).deploy()
         ).deployed();
-        levelRegistrarAddress = levelRegistrar.address;
+        levelAddress = levelRegistrar.address;
     }
 
     function createERC20() {
@@ -62,7 +62,7 @@ describe('Level Registrar', () => {
     }
 
     async function registrarAs(wallet: Wallet) {
-        return LevelRegistrarFactory.connect(levelRegistrarAddress, wallet)
+        return LevelFactory.connect(levelAddress, wallet)
     }
 
     describe('#constructor', () => {
@@ -82,16 +82,10 @@ describe('Level Registrar', () => {
             erc20 = await createERC20();
         });
 
-        it("Should be able to get a level from a proof", async () => {
+        it("Claim level from proof", async () => {
         })
 
-        it("A proof can be used", async () => {
-        })
-
-        it("A proof cannot be used for second time", async () => {
-        })
-
-        it("Should be able to retrieve a badge from a proof", async () => {
+        it("Cannot claim level from proof for the second time", async () => {
         })
 
     });

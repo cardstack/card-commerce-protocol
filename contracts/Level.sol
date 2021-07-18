@@ -1,17 +1,21 @@
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import {
+    MerkleProof
+} from "@openzeppelin/contracts/cryptography/MerkleProof.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {ILevel} from "./interfaces/ILevel.sol";
 
 contract Level is ILevel {
     using SafeMath for uint256;
     using MerkleProof for bytes32[];
+    using Counters for Counters.Counter;
 
     ILevel.Cycle public cycle;
     address public tally;
+    Counters.Counter private _tokenIdTracker;
 
     mapping(uint256 => bytes32) roots;
     mapping(address => bytes32) usedProofs;
@@ -21,9 +25,33 @@ contract Level is ILevel {
         _;
     }
 
+    modifier onlyTokenCreated(uint256 tokenId) {
+        require(
+            _tokenIdTracker.current() > tokenId,
+            "Inventory: token with that id does not exist"
+        );
+        _;
+    }
+
     function writeRoot(bytes32 root) external override {
         roots[cycle.number] = root;
         emit RootSubmission(root, cycle.number);
+    }
+
+    function claimLevel(address beneficiary) external override {
+        emit BeneficiaryClaimLevel(beneficiary);
+    }
+
+    function createLevel() external override {
+        emit LevelCreated(msg.sender);
+    }
+
+    function crossHonorLevel() external override {
+        emit CrossHonorCreated(msg.sender);
+    }
+
+    function mintLevelBadge() internal {
+        emit LevelBadgeMinted();
     }
 
     function _startNewCycle() internal onlyTally {

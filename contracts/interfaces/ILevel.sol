@@ -1,14 +1,21 @@
-pragma solidity ^0.4.22;
+pragma experimental ABIEncoderV2;
 
-contract ILevel {
+interface ILevel {
     struct CycleInfo {
         uint256 currentCycle;
         uint256 currentCycleStartBlock;
     }
 
-    function claimLevel(address beneficiary) external;
+    event RootSubmission(bytes32 beneficiary, uint256 cycle);
+    event BeneficiaryClaimLevel(address indexed beneficiary);
 
-    function levelForProof(address beneficiary, bytes calldata proof) external;
+    function writeRoot(bytes32 proof) external;
 
-    function proofUsed(bytes calldata proof) external;
+    // function claimLevel(address beneficiary) external;
+
+    // function levelForProof(address beneficiary, bytes calldata proof) external;
+
+    // function verifyProof(address beneficiary, bytes calldata proof) external;
+
+    // function proofUsed(bytes calldata proof) external;
 }

@@ -10,7 +10,7 @@ contract Level is ILevel {
     using SafeMath for uint256;
     using MerkleProof for bytes32[];
 
-    ILevel.CycleInfo public cycleInfo;
+    ILevel.Cycle public cycle;
     address public tally;
 
     mapping(uint256 => bytes32) roots;
@@ -22,13 +22,15 @@ contract Level is ILevel {
     }
 
     function writeRoot(bytes32 root) external override {
-        roots[cycleInfo.currentCycle] = root;
-        emit RootSubmission(root, cycleInfo.currentCycle);
+        roots[cycle.number] = root;
+        emit RootSubmission(root, cycle.number);
     }
 
-    // function _startNewCycle()
-    //     internal onlyTally
-    // {
-
-    // }
+    function _startNewCycle() internal onlyTally {
+        require(
+            block.number > cycle.startBlock,
+            "Cannot start new payment cycle before currentPaymentCycleStartBlock"
+        );
+        emit CycleEnded(cycle.number, cycle.startBlock, block.number);
+    }
 }

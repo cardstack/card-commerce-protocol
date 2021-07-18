@@ -1,13 +1,14 @@
 pragma experimental ABIEncoderV2;
 
 interface ILevel {
-    struct CycleInfo {
-        uint256 currentCycle;
-        uint256 currentCycleStartBlock;
+    struct Cycle {
+        uint256 number;
+        uint256 startBlock;
     }
 
     event RootSubmission(bytes32 beneficiary, uint256 cycle);
     event BeneficiaryClaimLevel(address indexed beneficiary);
+    event CycleEnded(uint256 number, uint256 startBlock, uint256 endBlock);
 
     function writeRoot(bytes32 proof) external;
 

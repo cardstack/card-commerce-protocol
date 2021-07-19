@@ -50,9 +50,11 @@ contract Level is ILevel {
         emit CrossHonorCreated(msg.sender);
     }
 
-    function mintLevelBadge() internal {
+    function _mintLevelBadge() internal {
         emit LevelBadgeMinted();
     }
+
+    function checkLevel(address beneficiary) external view override {}
 
     function _startNewCycle() internal onlyTally {
         require(

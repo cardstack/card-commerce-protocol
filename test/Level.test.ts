@@ -3,27 +3,17 @@ import asPromised from 'chai-as-promised';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Blockchain } from '../utils/Blockchain';
 import { generatedWallets } from '../utils/generatedWallets';
+import { BaseErc721Factory } from '../typechain/BaseErc721Factory';
 import { BaseErc20Factory } from '../typechain/BaseErc20Factory';
 import { Level } from '../typechain/Level';
 import {BaseErc20, LevelFactory} from "../typechain";
 import {Wallet} from "ethers";
+import {BigNumber, BigNumberish, Wallet} from 'ethers';
 
 chai.use(asPromised);
 
 let provider = new JsonRpcProvider();
 let blockchain = new Blockchain(provider);
-
-type Level = {
-    label: string;
-    threshold: number;
-}
-
-type CrossLevel = {
-    globalLevelLabel: string;
-    recognisedLevelsByLabel: string[];
-    setters: string[];
-    tokens: string[];
-}
 
 describe('Level Registrar', () => {
     let [
@@ -33,22 +23,15 @@ describe('Level Registrar', () => {
 
     const defaultLevel: Level = {
         label: "noob",
-        threshold: 0
+        tokenID: 1,
+        tokenAddress: "0x" // different badge, different token address
     }
 
     const proLevel: Level = {
         label: "pro",
-        threshold: 100
+        tokenID: 2,
+        tokenAddress: "0x" // different badge, different token address
     }
-
-    const defaultCrossLevel: CrossLevel = {
-        globalLevelLabel: "Star alliance gold",
-        recognisedLevelsByLabel: ["Air NZ premium", "United Gold"],
-        setters: [deployerWallet.address, otherWallet.address],
-        tokens: [deployerWallet.address, otherWallet.address]
-    }
-
-    let levelAddress: string;
 
     async function deploy() {
         const levelRegistrar = await (
@@ -59,6 +42,10 @@ describe('Level Registrar', () => {
 
     function createERC20() {
         return new BaseErc20Factory(deployerWallet).deploy("Test Token", "TEST", 18);
+    }
+
+    function createERC721() {
+        return new BaseErc721Factory(deployerWallet).deploy("Test Token", "TEST", 18);
     }
 
     async function registrarAs(wallet: Wallet) {
@@ -73,7 +60,7 @@ describe('Level Registrar', () => {
 
     describe("#levels", () => {
 
-        let levelRegistrarContract: LevelRegistrar;
+        let levelRegistrarContract: Level;
         let erc20: BaseErc20;
 
         beforeEach(async () => {
@@ -88,10 +75,13 @@ describe('Level Registrar', () => {
         it("Cannot claim level from proof for the second time", async () => {
         })
 
+        it("Check level from proof", async () => {
+        })
+
     });
 
     describe("#crossLevels", () => {
-        let levelRegistrarContract: LevelRegistrar;
+        let levelRegistrarContract: Level;
         let erc20: BaseErc20;
 
         beforeEach(async () => {

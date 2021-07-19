@@ -7,15 +7,18 @@ import {
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {ILevel} from "./interfaces/ILevel.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/EnumerableSet.sol";
 
 contract Level is ILevel {
     using SafeMath for uint256;
     using Counters for Counters.Counter;
     using MerkleProof for bytes32[];
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     ILevel.Cycle public cycle;
     Counters.Counter private levelID;
     address public tally;
+    EnumerableSet.AddressSet private _registeredBadges;
 
     mapping(address => Level) levels; //this requires loops. dont do this!
     mapping(address => address) beneficiaries; //nft address/level id <> address
@@ -39,11 +42,13 @@ contract Level is ILevel {
         emit BeneficiaryClaimLevel(msg.sender);
     }
 
-    function createLevel() external override {
+    function createLevel(address badge) external override {
+        _registeredBadges.add(badge);
         emit LevelCreated(msg.sender);
     }
 
     function setLevel(address badge, address beneficiary) external override {
+        require(_registeredBadges.contains(badge), "Badge is not added");
         beneficiaries[badge] = beneficiary;
         emit LevelSet(badge, beneficiary);
     }

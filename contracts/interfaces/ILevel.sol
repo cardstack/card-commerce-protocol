@@ -8,6 +8,8 @@ interface ILevel {
 
     struct Level {
         string label;
+        address tokenAddress;
+        uint256 tokenID;
     }
 
     event RootSubmission(bytes32 beneficiary, uint256 cycle);
@@ -24,6 +26,8 @@ interface ILevel {
     function createLevel() external;
 
     function crossHonorLevel() external;
+
+    function checkLevel(address beneficiary) external view;
 
     // function levelForProof(address beneficiary, bytes calldata proof) external;
 

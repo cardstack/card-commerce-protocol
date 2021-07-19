@@ -19,6 +19,7 @@ interface ILevel {
     event RootSubmission(bytes32 beneficiary, uint256 cycle);
     event BeneficiaryClaimLevel(address indexed beneficiary);
     event LevelCreated(address creator);
+    event LevelSet(address badgeAddress, address beneficiary);
     event LevelBadgeMinted();
     event CrossHonorCreated(address creator);
     event CycleEnded(uint256 number, uint256 startBlock, uint256 endBlock);
@@ -29,9 +30,19 @@ interface ILevel {
 
     function createLevel() external;
 
+    function setLevel(address badge, address benficiary) external;
+
     function crossHonorLevel() external;
 
-    function getLevel(address beneficiary) external view returns (Level memory);
+    function getLevels(address beneficiary)
+        external
+        view
+        returns (Level memory);
+
+    function hasLevel(address badge, address beneficiary)
+        external
+        view
+        returns (bool);
 
     // function checkLevel(address beneficiary) external view;
 

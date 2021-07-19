@@ -86,18 +86,18 @@ describe('Level Registrar 2', () => {
       pro = await createBadge('Pro', 'PRO'); //an nft contract
     });
 
-    it('create level/add badge', async () => {
+    it('add badge', async () => {
       await levelRegistrarContract.createLevel(noob.address)
       deployerWalletAddress = deployerWallet.address;
     });
 
-    it('level set', async () => {
+    it('can set level set if badge added', async () => {
       await levelRegistrarContract.createLevel(noob.address)
       otherWalletAddress = otherWallet.address;
       await levelRegistrarContract.setLevel(noob.address, otherWalletAddress);
     });
 
-    it('level not set', async () => {
+    it('does not has level if level not set', async () => {
       otherWalletAddress = otherWallet.address;
       const hasLevel = await levelRegistrarContract.hasLevel(
         noob.address,
@@ -111,9 +111,6 @@ describe('Level Registrar 2', () => {
         await expect(
             levelRegistrarContract.setLevel(noob.address, otherWalletAddress)
         ).rejectedWith("Badge is not added");
-    });
-
-    it('level set has badge', async () => {
     });
 
     it('Claim level from proof', async () => {

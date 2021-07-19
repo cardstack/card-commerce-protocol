@@ -23,13 +23,14 @@ type LevelResult = {
   label: string,
   badge: Badge
 };
-describe('Level Registrar', () => {
+describe('Level Registrar 2', () => {
   let [deployerWallet, otherWallet] = generatedWallets(provider);
 
   let levelAddress: string;
   let sampleRoot: string;
   let sampleProof: string;
   let sampleProofBytes: BytesLike;
+
 
   async function deploy() {
     const levelRegistrar = await (
@@ -72,21 +73,30 @@ describe('Level Registrar', () => {
     let erc20: BaseErc20;
     let noob, pro: Erc721;
     let deployerWalletAddress: string;
+    let otherWalletAddress: string;
+
     let userLevel: LevelResult;
 
     beforeEach(async () => {
       await deploy();
+
       levelRegistrarContract = await registrarAs(deployerWallet);
       erc20 = await createERC20();
-      noob = await createBadge('Noob', 'NEWB');
-      pro = await createBadge('Pro', 'PRO');
+      noob = await createBadge('Noob', 'NEWB'); //an nft contract
+      pro = await createBadge('Pro', 'PRO'); //an nft contract
+    });
+
+    it('Set level with badge', async () => {
+      otherWalletAddress = otherWallet.address;
+      await levelRegistrarContract.setLevel(noob.address, otherWalletAddress);
+      await levelRegistrarContract.hasLevel(noob.address, otherWalletAddress)
+      // userLevel = await levelRegistrarContract.getLevels(deployerWalletAddress)
     });
 
     it('Claim level from proof', async () => {
       await levelRegistrarContract.claimLevel(sampleProofBytes);
       deployerWalletAddress = deployerWallet.address;
-      userLevel = await levelRegistrarContract.getLevel(deployerWalletAddress)
-      console.log(userLevel)
+      userLevel = await levelRegistrarContract.getLevels(deployerWalletAddress)
     });
 
     it('Cannot claim level from proof for the second time', async () => {});

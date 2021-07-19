@@ -21,7 +21,8 @@ contract Level is ILevel {
     EnumerableSet.AddressSet private _registeredBadges;
 
     mapping(address => Level) levels; //this requires loops. dont do this!
-    mapping(address => address) beneficiaries; //nft address/level id <> address
+    mapping(address => address) beneficiaries; //badge <> beneficiary address
+
     mapping(uint256 => bytes32) roots;
     mapping(address => bytes32) usedProofs;
 
@@ -60,10 +61,6 @@ contract Level is ILevel {
     function _mintLevelBadge() internal {
         emit LevelBadgeMinted();
     }
-
-    // function checkLevel(address beneficiary) external view override {
-    //    return levels[beneficiary].label;
-    // }
 
     function getLevels(address beneficiary)
         external

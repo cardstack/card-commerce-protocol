@@ -16,12 +16,12 @@ let provider = new JsonRpcProvider();
 let blockchain = new Blockchain(provider);
 
 type Badge = {
-    token: string
-    tokenID: BigNumber
-}
+  token: string;
+  tokenID: BigNumber;
+};
 type LevelResult = {
-  label: string,
-  badge: Badge
+  label: string;
+  badge: Badge;
 };
 describe('Level Registrar 2', () => {
   let [deployerWallet, otherWallet] = generatedWallets(provider);
@@ -30,7 +30,6 @@ describe('Level Registrar 2', () => {
   let sampleRoot: string;
   let sampleProof: string;
   let sampleProofBytes: BytesLike;
-
 
   async function deploy() {
     const levelRegistrar = await (
@@ -76,6 +75,7 @@ describe('Level Registrar 2', () => {
     let otherWalletAddress: string;
 
     let userLevel: LevelResult;
+    let hasLevel: boolean;
 
     beforeEach(async () => {
       await deploy();
@@ -86,17 +86,24 @@ describe('Level Registrar 2', () => {
       pro = await createBadge('Pro', 'PRO'); //an nft contract
     });
 
-    it('Set level with badge', async () => {
+    it('level set', async () => {
       otherWalletAddress = otherWallet.address;
       await levelRegistrarContract.setLevel(noob.address, otherWalletAddress);
-      await levelRegistrarContract.hasLevel(noob.address, otherWalletAddress)
-      // userLevel = await levelRegistrarContract.getLevels(deployerWalletAddress)
+    });
+
+    it('level not set', async () => {
+      otherWalletAddress = otherWallet.address;
+      const hasLevel = await levelRegistrarContract.hasLevel(
+        noob.address,
+        otherWalletAddress
+      );
+      expect(hasLevel).eq(false, 'Address does not have a level');
     });
 
     it('Claim level from proof', async () => {
       await levelRegistrarContract.claimLevel(sampleProofBytes);
       deployerWalletAddress = deployerWallet.address;
-      userLevel = await levelRegistrarContract.getLevels(deployerWalletAddress)
+      userLevel = await levelRegistrarContract.getLevels(deployerWalletAddress);
     });
 
     it('Cannot claim level from proof for the second time', async () => {});

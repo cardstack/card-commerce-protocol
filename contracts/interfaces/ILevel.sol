@@ -8,7 +8,11 @@ interface ILevel {
 
     struct Level {
         string label;
-        address tokenAddress;
+        Badge badge;
+    }
+
+    struct Badge {
+        address token;
         uint256 tokenID;
     }
 
@@ -19,15 +23,17 @@ interface ILevel {
     event CrossHonorCreated(address creator);
     event CycleEnded(uint256 number, uint256 startBlock, uint256 endBlock);
 
-    function writeRoot(bytes32 proof) external;
+    function writeRoot(bytes32 root) external;
 
-    function claimLevel(address beneficiary) external;
+    function claimLevel(bytes calldata proof) external;
 
     function createLevel() external;
 
     function crossHonorLevel() external;
 
-    function checkLevel(address beneficiary) external view;
+    function getLevel(address beneficiary) external view returns (Level memory);
+
+    // function checkLevel(address beneficiary) external view;
 
     // function levelForProof(address beneficiary, bytes calldata proof) external;
 

@@ -14,10 +14,11 @@ contract Level is ILevel {
     using MerkleProof for bytes32[];
 
     ILevel.Cycle public cycle;
-    Counters.Counter private _tokenIdTracker;
+    Counters.Counter private levelID;
     address public tally;
 
-    mapping(address => Level) levels;
+    mapping(address => Level) levels; //this requires loops. dont do this!
+    mapping(address => address) beneficiaries; //nft address/level id <> address
     mapping(uint256 => bytes32) roots;
     mapping(address => bytes32) usedProofs;
 
@@ -42,6 +43,11 @@ contract Level is ILevel {
         emit LevelCreated(msg.sender);
     }
 
+    function setLevel(address badge, address beneficiary) external override {
+        beneficiaries[badge] = beneficiary;
+        emit LevelSet(badge, beneficiary);
+    }
+
     function crossHonorLevel() external override {
         emit CrossHonorCreated(msg.sender);
     }
@@ -54,13 +60,23 @@ contract Level is ILevel {
     //    return levels[beneficiary].label;
     // }
 
-    function getLevel(address beneficiary)
+    function getLevels(address beneficiary)
         external
         view
         override
         returns (Level memory)
     {
         return levels[beneficiary];
+    }
+
+    function hasLevel(address badge, address beneficiary)
+        external
+        view
+        override
+        returns (bool)
+    {
+        if (beneficiaries[badge] != address(0)) return true;
+        else return false;
     }
 
     function _startNewCycle() internal onlyTally {

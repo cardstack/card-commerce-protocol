@@ -10,13 +10,14 @@ import {ILevel} from "./interfaces/ILevel.sol";
 
 contract Level is ILevel {
     using SafeMath for uint256;
-    using MerkleProof for bytes32[];
     using Counters for Counters.Counter;
+    using MerkleProof for bytes32[];
 
     ILevel.Cycle public cycle;
-    address public tally;
     Counters.Counter private _tokenIdTracker;
+    address public tally;
 
+    mapping(address => Level) levels;
     mapping(uint256 => bytes32) roots;
     mapping(address => bytes32) usedProofs;
 
@@ -25,21 +26,16 @@ contract Level is ILevel {
         _;
     }
 
-    modifier onlyTokenCreated(uint256 tokenId) {
-        require(
-            _tokenIdTracker.current() > tokenId,
-            "Inventory: token with that id does not exist"
-        );
-        _;
-    }
-
     function writeRoot(bytes32 root) external override {
         roots[cycle.number] = root;
+        _startNewCycle();
         emit RootSubmission(root, cycle.number);
     }
 
-    function claimLevel(address beneficiary) external override {
-        emit BeneficiaryClaimLevel(beneficiary);
+    function claimLevel(bytes calldata proof) external override {
+        // verify proof here
+        levels[msg.sender] = Level("hi", Badge(msg.sender, 1));
+        emit BeneficiaryClaimLevel(msg.sender);
     }
 
     function createLevel() external override {
@@ -54,7 +50,18 @@ contract Level is ILevel {
         emit LevelBadgeMinted();
     }
 
-    function checkLevel(address beneficiary) external view override {}
+    // function checkLevel(address beneficiary) external view override {
+    //    return levels[beneficiary].label;
+    // }
+
+    function getLevel(address beneficiary)
+        external
+        view
+        override
+        returns (Level memory)
+    {
+        return levels[beneficiary];
+    }
 
     function _startNewCycle() internal onlyTally {
         require(

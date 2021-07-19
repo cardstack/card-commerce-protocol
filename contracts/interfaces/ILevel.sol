@@ -28,7 +28,7 @@ interface ILevel {
 
     function claimLevel(bytes calldata proof) external;
 
-    function createLevel() external;
+    function createLevel(address badge) external;
 
     function setLevel(address badge, address benficiary) external;
 

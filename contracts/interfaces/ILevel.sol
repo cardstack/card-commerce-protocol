@@ -1,3 +1,4 @@
+pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
 interface ILevel {
@@ -6,10 +7,10 @@ interface ILevel {
         uint256 startBlock;
     }
 
-    struct Level {
-        string label;
-        Badge badge;
-    }
+    // struct Level {
+    //     string label;
+    //     Badge badge;
+    // }
 
     struct Badge {
         address token;
@@ -22,22 +23,27 @@ interface ILevel {
     event LevelSet(address badgeAddress, address beneficiary);
     event LevelBadgeMinted();
     event CrossHonorCreated(address creator);
-    event CycleEnded(uint256 number, uint256 startBlock, uint256 endBlock);
 
-    function writeRoot(bytes32 root) external;
+    // event CycleEnded(uint256 number, uint256 startBlock, uint256 endBlock);
 
-    function claimLevel(bytes calldata proof) external;
+    // function writeRoot(bytes32 root) external;
+
+    // function claimLevel(bytes calldata proof) external;
 
     function createLevel(address badge) external;
 
-    function setLevel(address badge, address benficiary) external;
+    function setLevel(
+        address badge,
+        uint256 tokenID,
+        address beneficiary
+    ) external;
 
     function crossHonorLevel() external;
 
-    function getLevels(address beneficiary)
-        external
-        view
-        returns (Level memory);
+    // function getLevels(address beneficiary)
+    //     external
+    //     view
+    //     returns (Level memory);
 
     function hasLevel(address badge, address beneficiary)
         external

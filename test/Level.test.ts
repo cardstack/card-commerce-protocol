@@ -19,7 +19,6 @@ chai.use(asPromised);
 let provider = new JsonRpcProvider();
 let blockchain = new Blockchain(provider);
 
-
 describe('Level Registrar 2', () => {
   let [deployerWallet, otherWallet] = generatedWallets(provider);
   let levelAddress: string;
@@ -110,11 +109,13 @@ describe('Level Registrar 2', () => {
 
     it('Cannot set level if badge is not approved', async () => {
       await levelRegistrarContract.createLevel(noobContract.address);
-      await expect(levelRegistrarContract.setLevel(
-        noobContract.address,
-        1,
-        otherWallet.address
-      )).rejectedWith("ERC721: transfer caller is not owner nor approved");
+      await expect(
+        levelRegistrarContract.setLevel(
+          noobContract.address,
+          1,
+          otherWallet.address
+        )
+      ).rejectedWith('ERC721: transfer caller is not owner nor approved');
     });
 
     it('Can set level', async () => {
@@ -150,6 +151,8 @@ describe('Level Registrar 2', () => {
       expect(ownerNewBalance.toNumber()).eq(1);
       expect(receiverNewBalance.toNumber()).eq(1);
       expect(contractNewBalance.toNumber()).eq(0);
+      let hasLevel: boolean =await levelRegistrarContract.hasLevel(noobContract.address, otherWallet.address)
+      expect(hasLevel).to.be.true
     });
   });
 });

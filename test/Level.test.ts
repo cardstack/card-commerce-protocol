@@ -3,29 +3,25 @@ import asPromised from 'chai-as-promised';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Blockchain } from '../utils/Blockchain';
 import { generatedWallets } from '../utils/generatedWallets';
-import { Erc721Factory } from '../typechain/Erc721Factory';
 import { BaseErc20Factory } from '../typechain/BaseErc20Factory';
+import { BaseErc721Factory } from '../typechain/BaseErc721Factory';
 import { Level } from '../typechain/Level';
-import { BaseErc20, Erc721, LevelFactory } from '../typechain';
-import { BytesLike, BigNumber, BigNumberish, Wallet } from 'ethers';
+import { BaseErc20, BaseErc721 } from '../typechain';
+import { BytesLike, BigNumber, Wallet } from 'ethers';
 import { randomBytes } from 'ethers/lib/utils';
+import { ethers } from 'ethers';
+import { LevelFactory } from '../typechain/LevelFactory';
+import { Erc721Mintable } from '../typechain/Erc721Mintable';
+import { Erc721MintableFactory } from '../typechain/Erc721MintableFactory';
+import { MaxUint256, AddressZero } from '@ethersproject/constants';
 
 chai.use(asPromised);
-
 let provider = new JsonRpcProvider();
 let blockchain = new Blockchain(provider);
 
-type Badge = {
-  token: string;
-  tokenID: BigNumber;
-};
-type LevelResult = {
-  label: string;
-  badge: Badge;
-};
+
 describe('Level Registrar 2', () => {
   let [deployerWallet, otherWallet] = generatedWallets(provider);
-
   let levelAddress: string;
   let sampleRoot: string;
   let sampleProof: string;
@@ -37,7 +33,6 @@ describe('Level Registrar 2', () => {
     ).deployed();
     levelAddress = levelRegistrar.address;
   }
-
   function createERC20() {
     return new BaseErc20Factory(deployerWallet).deploy(
       'Test Token',
@@ -46,14 +41,21 @@ describe('Level Registrar 2', () => {
     );
   }
 
-  function createBadge(label, symbol) {
-    return new Erc721Factory(deployerWallet).deploy(label, symbol);
+  function createERC721(label: string, symbol: string) {
+    return new Erc721MintableFactory(deployerWallet).deploy(label, symbol);
   }
 
   async function registrarAs(wallet: Wallet) {
     return LevelFactory.connect(levelAddress, wallet);
   }
 
+  async function badgeAs(token: string, wallet: Wallet) {
+    return Erc721MintableFactory.connect(token, wallet);
+  }
+
+  async function tokenAs(token: string, wallet: Wallet) {
+    return BaseErc721Factory.connect(token, wallet);
+  }
   sampleRoot =
     '0x1db9340101379dc2dfc7cc11f178e9b02489d10700ea911dffa7adf45ebef56f';
 
@@ -70,57 +72,84 @@ describe('Level Registrar 2', () => {
   describe('#levels', () => {
     let levelRegistrarContract: Level;
     let erc20: BaseErc20;
-    let noob, pro: Erc721;
+    let noob, pro: Erc721Mintable;
+    let noobContractMintable, proContractMintable: Erc721Mintable;
+    let noobContract, proContract: BaseErc721;
     let deployerWalletAddress: string;
     let otherWalletAddress: string;
-
-    let userLevel: LevelResult;
     let hasLevel: boolean;
 
     beforeEach(async () => {
       await deploy();
-
+      noob = await createERC721('Noob', 'NEWB'); //an nft contract
+      pro = await createERC721('Pro', 'PRO'); //an nft contract
       levelRegistrarContract = await registrarAs(deployerWallet);
-      erc20 = await createERC20();
-      noob = await createBadge('Noob', 'NEWB'); //an nft contract
-      pro = await createBadge('Pro', 'PRO'); //an nft contract
+      noobContractMintable = await badgeAs(noob.address, deployerWallet);
+      proContractMintable = await badgeAs(pro.address, deployerWallet);
+      await noobContractMintable.mint(deployerWallet.address, 1);
+      await noobContractMintable.mint(deployerWallet.address, 2);
+      await proContractMintable.mint(deployerWallet.address, 1);
+      await proContractMintable.mint(deployerWallet.address, 2);
+      noobContract = await tokenAs(noob.address, deployerWallet);
+      proContract = await tokenAs(pro.address, deployerWallet);
     });
 
-    it('add badge', async () => {
-      await levelRegistrarContract.createLevel(noob.address)
-      deployerWalletAddress = deployerWallet.address;
+    it('Can add badge', async () => {
+      await levelRegistrarContract.createLevel(noob.address);
     });
 
-    it('can set level set if badge added', async () => {
-      await levelRegistrarContract.createLevel(noob.address)
-      otherWalletAddress = otherWallet.address;
-      await levelRegistrarContract.setLevel(noob.address, otherWalletAddress);
+    it('Cannot set level if badge not added', async () => {
+      await expect(
+        levelRegistrarContract.setLevel(
+          noobContract.address,
+          1,
+          otherWallet.address
+        )
+      ).rejectedWith('Badge is not added');
     });
 
-    it('does not has level if level not set', async () => {
-      otherWalletAddress = otherWallet.address;
-      const hasLevel = await levelRegistrarContract.hasLevel(
-        noob.address,
-        otherWalletAddress
+    it('Cannot set level if badge is not approved', async () => {
+      await levelRegistrarContract.createLevel(noobContract.address);
+      await expect(levelRegistrarContract.setLevel(
+        noobContract.address,
+        1,
+        otherWallet.address
+      )).rejectedWith("ERC721: transfer caller is not owner nor approved");
+    });
+
+    it('Can set level', async () => {
+      await noobContract.setApprovalForAll(
+        levelRegistrarContract.address,
+        true
       );
-      expect(hasLevel).eq(false, 'Address does not have a level');
+      let isApproved: boolean = await noobContract.isApprovedForAll(
+        deployerWallet.address,
+        levelRegistrarContract.address
+      );
+      await expect(isApproved, 'badge contract should be approved').to.be.true;
+      let ownerOldBalance: BigNumber = await noobContract.balanceOf(
+        deployerWallet.address
+      );
+      expect(ownerOldBalance.toNumber()).eq(2);
+
+      await levelRegistrarContract.createLevel(noobContract.address);
+      await levelRegistrarContract.setLevel(
+        noobContract.address,
+        1,
+        otherWallet.address
+      );
+      let ownerNewBalance: BigNumber = await noobContract.balanceOf(
+        deployerWallet.address
+      );
+      let receiverNewBalance: BigNumber = await noobContract.balanceOf(
+        otherWallet.address
+      );
+      let contractNewBalance: BigNumber = await noobContract.balanceOf(
+        levelRegistrarContract.address
+      );
+      expect(ownerNewBalance.toNumber()).eq(1);
+      expect(receiverNewBalance.toNumber()).eq(1);
+      expect(contractNewBalance.toNumber()).eq(0);
     });
-
-    it('cannot set level if badge not added', async () => {
-      otherWalletAddress = otherWallet.address;
-        await expect(
-            levelRegistrarContract.setLevel(noob.address, otherWalletAddress)
-        ).rejectedWith("Badge is not added");
-    });
-
-    it('Claim level from proof', async () => {
-      await levelRegistrarContract.claimLevel(sampleProofBytes);
-      deployerWalletAddress = deployerWallet.address;
-      userLevel = await levelRegistrarContract.getLevels(deployerWalletAddress);
-    });
-
-    it('Cannot claim level from proof for the second time', async () => {});
-
-    it('Check level from proof', async () => {});
   });
 });

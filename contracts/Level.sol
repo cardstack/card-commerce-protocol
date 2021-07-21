@@ -11,9 +11,12 @@ contract Level is ILevel {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address public tally;
+    address internal constant ZERO_ADDRESS = address(0);
     EnumerableSet.AddressSet private _registeredBadges;
 
     mapping(address => address) beneficiaries; //badge <> beneficiary address
+    mapping(address => EnumerableSet.AddressSet) crossLevels; //parent badge <> set of child badges
+    mapping(address => address) parentLevel; //child badge <> parent badge
 
     modifier onlyTally() {
         require(tally == msg.sender, "Caller is not tally");
@@ -43,7 +46,7 @@ contract Level is ILevel {
 
     function unsetLevel(address badge, address beneficiary) external override {
         require(_registeredBadges.contains(badge), "Badge is not added");
-        require(beneficiaries[badge] != address(0), "Level is not set");
+        require(beneficiaries[badge] != ZERO_ADDRESS, "Level is not set");
         delete beneficiaries[badge];
         emit LevelUnset(badge, beneficiary);
     }
@@ -58,9 +61,13 @@ contract Level is ILevel {
         emit LevelBadgeSupplied(token, msg.sender);
     }
 
-    //TBD
-    function crossHonorLevel() external override {
-        emit CrossHonorCreated(msg.sender);
+    function addCrossLevel(address parentBadge, address childBadge)
+        external
+        override
+    {
+        crossLevels[parentBadge].add(childBadge);
+        parentLevel[childBadge] = parentBadge;
+        emit CrossHonorAdded(parentBadge, childBadge);
     }
 
     // View
@@ -70,7 +77,22 @@ contract Level is ILevel {
         override
         returns (bool)
     {
-        if (beneficiaries[badge] != address(0)) return true;
+        // if (beneficiaries[badge] != ZERO_ADDRESS) return true;
+        if (parentLevel[badge] != ZERO_ADDRESS) {
+            if (
+                crossLevels[parentLevel[badge]].contains(badge) &&
+                beneficiaries[parentLevel[badge]] != ZERO_ADDRESS
+            ) return true;
+        } else return false;
+    }
+
+    function isCrossLevel(address parentBadge, address childBadge)
+        external
+        view
+        override
+        returns (bool)
+    {
+        if (crossLevels[parentBadge].contains(childBadge)) return true;
         else return false;
     }
 }

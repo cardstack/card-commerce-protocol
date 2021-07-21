@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract Level is ILevel {
     using SafeMath for uint256;
-    using Counters for Counters.Counter;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address public tally;
@@ -23,7 +22,12 @@ contract Level is ILevel {
 
     function createLevel(address badge) external override {
         _registeredBadges.add(badge);
-        emit LevelCreated(msg.sender);
+        emit LevelCreated(badge, msg.sender);
+    }
+
+    function removeLevel(address badge) external override {
+        _registeredBadges.remove(badge);
+        emit LevelRemoved(badge, msg.sender);
     }
 
     function setLevel(
@@ -32,19 +36,26 @@ contract Level is ILevel {
         address beneficiary
     ) external override {
         require(_registeredBadges.contains(badge), "Badge is not added");
-        _mintLevelBadge(badge, tokenID, msg.sender, beneficiary);
+        _supplyLevelBadge(badge, tokenID, msg.sender, beneficiary);
         beneficiaries[badge] = beneficiary;
         emit LevelSet(badge, beneficiary);
     }
 
-    function _mintLevelBadge(
+    function unsetLevel(address badge, address beneficiary) external override {
+        require(_registeredBadges.contains(badge), "Badge is not added");
+        require(beneficiaries[badge] != address(0), "Level is not set");
+        delete beneficiaries[badge];
+        emit LevelUnset(badge, beneficiary);
+    }
+
+    function _supplyLevelBadge(
         address token,
         uint256 tokenId,
         address from,
         address beneficiary
     ) internal {
         IERC721(token).safeTransferFrom(from, beneficiary, tokenId);
-        emit LevelBadgeMinted();
+        emit LevelBadgeSupplied(token, msg.sender);
     }
 
     //TBD

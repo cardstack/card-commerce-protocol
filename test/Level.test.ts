@@ -65,9 +65,11 @@ describe('Level Registrar 2', () => {
   describe('#levels', () => {
     let levelRegistrarContract: Level;
     let erc20: BaseErc20;
-    let noob, pro: Erc721Mintable;
-    let noobContractMintable, proContractMintable: Erc721Mintable;
-    let noobContract, proContract: BaseErc721;
+    let noob, pro, proAlliance: Erc721Mintable;
+    let noobContractMintable,
+      proContractMintable,
+      proAllianceContractMintable: Erc721Mintable;
+    let noobContract, proContract, proAllianceContract: BaseErc721;
     let deployerWalletAddress: string;
     let otherWalletAddress: string;
     let hasLevel: boolean;
@@ -76,15 +78,19 @@ describe('Level Registrar 2', () => {
       await deploy();
       noob = await createERC721('Noob', 'NEWB'); //an nft contract
       pro = await createERC721('Pro', 'PRO'); //an nft contract
+      proAlliance = await createERC721('Only Pros', 'GOPRO');
       levelRegistrarContract = await registrarAs(deployerWallet);
       noobContractMintable = await badgeAs(noob.address, deployerWallet);
       proContractMintable = await badgeAs(pro.address, deployerWallet);
+      proAllianceContractMintable = await badgeAs(proAlliance.address, deployerWallet);
       await noobContractMintable.mint(deployerWallet.address, 1);
       await noobContractMintable.mint(deployerWallet.address, 2);
       await proContractMintable.mint(deployerWallet.address, 1);
       await proContractMintable.mint(deployerWallet.address, 2);
+      await proAllianceContractMintable.mint(deployerWallet.address, 1);
       noobContract = await tokenAs(noob.address, deployerWallet);
       proContract = await tokenAs(pro.address, deployerWallet);
+      proAllianceContract = await tokenAs(proAlliance.address, deployerWallet);
     });
 
     it('Can add badge', async () => {
@@ -178,6 +184,48 @@ describe('Level Registrar 2', () => {
         expect(receiverNewBalance.toNumber()).eq(1);
         expect(hasLevel).to.be.false;
       });
+
+      it.only('Can add cross level', async () => {
+        // parent contract
+        await proAllianceContract.setApprovalForAll(
+          levelRegistrarContract.address,
+          true
+        );
+        await levelRegistrarContract.createLevel(proAllianceContract.address);
+        await levelRegistrarContract.setLevel(
+          proAllianceContract.address,
+          1,
+          otherWallet.address
+        );
+        //cross honor
+        await levelRegistrarContract.addCrossLevel(
+          proAllianceContract.address,
+          proContract.address
+        );
+        let isCrossLevel: boolean = await levelRegistrarContract.isCrossLevel(
+          proAllianceContract.address,
+          proContract.address,
+        )
+        expect(isCrossLevel).to.be.true
+        let ownerNewBalance: BigNumber = await proAllianceContract.balanceOf(
+          deployerWallet.address
+        );
+        let receiverNewBalance: BigNumber = await proAllianceContract.balanceOf(
+          otherWallet.address
+        );
+        let contractNewBalance: BigNumber = await proAllianceContract.balanceOf(
+          levelRegistrarContract.address
+        );
+        let hasLevel: boolean = await levelRegistrarContract.hasLevel(
+          proContract.address,
+          otherWallet.address
+        );
+        expect(ownerNewBalance.toNumber()).eq(0);
+        expect(receiverNewBalance.toNumber()).eq(1);
+        expect(contractNewBalance.toNumber()).eq(0);
+        expect(hasLevel).to.be.true
+      });
+
     });
   });
 });

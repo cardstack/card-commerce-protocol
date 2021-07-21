@@ -16,6 +16,7 @@
     "build": "yarn build:contracts && yarn build:package",
     "prepublishOnly": "yarn build",
     "test": "hardhat test",
+    "test:levels": "hardhat test --no-compile ./test/LevelRegistrar.test.ts",
     "compile": "hardhat clean && hardhat compile",
     "typechain": "rm -rf ./typechain && typechain --show-stack-traces --target ethers-v5 --outDir ./typechain 'artifacts/!(build-info)/**/!(*.dbg*)*.json'",
     "build:contracts": "yarn compile && yarn typechain",
@@ -24,7 +25,8 @@
     "watch": "ts-node scripts/watch.ts"
   },
   "dependencies": {
-    "ethers": "^5.0.19"
+    "ethers": "^5.0.19",
+    "hardhat-watcher": "^2.1.1"
   },
   "devDependencies": {
     "@ethersproject/keccak256": "^5.0.6",

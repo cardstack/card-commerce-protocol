@@ -7,14 +7,12 @@ interface ILevel {
         uint256 tokenID;
     }
 
-    // mapping(address => address) beneficiaries; //badge <> beneficiary address
-
     event LevelCreated(address badge, address creator);
     event LevelRemoved(address badge, address creator);
     event LevelSet(address badge, address beneficiary);
     event LevelUnset(address badge, address beneficiary);
     event LevelBadgeSupplied(address badge, address suppler);
-    event CrossHonorCreated(address creator);
+    event CrossHonorAdded(address parentBadge, address childBadge);
 
     //Level
     function createLevel(address badge) external;
@@ -29,7 +27,7 @@ interface ILevel {
 
     function unsetLevel(address badge, address beneficiary) external;
 
-    function crossHonorLevel() external;
+    function addCrossLevel(address parentBadge, address childBadge) external;
 
     //View
     function hasLevel(address badge, address beneficiary)
@@ -37,6 +35,11 @@ interface ILevel {
         view
         returns (bool);
 
+    function isCrossLevel(address parentBadge, address childBadge)
+        external
+        view
+        returns (bool);
+
     //TBD
-    //Merkle Proo
+    //Merkle Proof
 }

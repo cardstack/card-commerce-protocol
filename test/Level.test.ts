@@ -162,6 +162,7 @@ describe('Level Registrar 2', () => {
         expect(receiverNewBalance.toNumber()).eq(1);
         expect(contractNewBalance.toNumber()).eq(0);
         expect(hasLevel).to.be.true;
+
       });
       it('Can unset level', async () => {
         await levelRegistrarContract.createLevel(noobContract.address);
@@ -185,7 +186,7 @@ describe('Level Registrar 2', () => {
         expect(hasLevel).to.be.false;
       });
 
-      it.only('Can add cross level', async () => {
+      it('Can add cross level', async () => {
         // parent contract
         await proAllianceContract.setApprovalForAll(
           levelRegistrarContract.address,

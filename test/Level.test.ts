@@ -148,13 +148,13 @@ describe('Level Registrar 2', () => {
         let contractNewBalance: BigNumber = await noobContract.balanceOf(
           levelRegistrarContract.address
         );
-        expect(ownerNewBalance.toNumber()).eq(1);
-        expect(receiverNewBalance.toNumber()).eq(1);
-        expect(contractNewBalance.toNumber()).eq(0);
         let hasLevel: boolean = await levelRegistrarContract.hasLevel(
           noobContract.address,
           otherWallet.address
         );
+        expect(ownerNewBalance.toNumber()).eq(1);
+        expect(receiverNewBalance.toNumber()).eq(1);
+        expect(contractNewBalance.toNumber()).eq(0);
         expect(hasLevel).to.be.true;
       });
       it('Can unset level', async () => {
@@ -172,6 +172,10 @@ describe('Level Registrar 2', () => {
           noobContract.address,
           otherWallet.address
         );
+        let receiverNewBalance: BigNumber = await noobContract.balanceOf(
+          otherWallet.address
+        );
+        expect(receiverNewBalance.toNumber()).eq(1);
         expect(hasLevel).to.be.false;
       });
     });

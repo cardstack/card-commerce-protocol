@@ -77,7 +77,7 @@ contract Level is ILevel {
         override
         returns (bool)
     {
-        // if (beneficiaries[badge] != ZERO_ADDRESS) return true;
+        if (beneficiaries[badge] != ZERO_ADDRESS) return true;
         if (parentLevel[badge] != ZERO_ADDRESS) {
             if (
                 crossLevels[parentLevel[badge]].contains(badge) &&

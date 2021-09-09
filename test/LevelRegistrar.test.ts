@@ -1,7 +1,6 @@
 import chai, { expect } from 'chai';
 import asPromised from 'chai-as-promised';
 import { JsonRpcProvider } from '@ethersproject/providers';
-import { Blockchain } from '../utils/Blockchain';
 import { generatedWallets } from '../utils/generatedWallets';
 import { BaseErc20Factory } from '../typechain/BaseErc20Factory';
 import { LevelRegistrar } from '../typechain/LevelRegistrar';
@@ -11,7 +10,6 @@ import {Wallet} from "ethers";
 chai.use(asPromised);
 
 const provider = new JsonRpcProvider();
-const blockchain = new Blockchain(provider);
 
 type Level = {
     label: string;

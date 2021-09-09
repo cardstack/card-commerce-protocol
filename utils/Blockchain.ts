@@ -1,7 +1,7 @@
-import { providers } from 'ethers'
+import { providers } from 'ethers';
 
 export class Blockchain {
-  private _snapshotId: number;
+  private _snapshotId: number | undefined;
   private _provider: providers.JsonRpcProvider;
 
   constructor(provider: providers.JsonRpcProvider) {
@@ -21,11 +21,12 @@ export class Blockchain {
     await this.sendJSONRpcRequestAsync('evm_revert', ['0x1']);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async increaseTimeAsync(duration: number): Promise<any> {
     await this.sendJSONRpcRequestAsync('evm_increaseTime', [duration]);
   }
 
-  public async waitBlocksAsync(count: number) {
+  public async waitBlocksAsync(count: number): Promise<void> {
     for (let i = 0; i < count; i++) {
       await this.sendJSONRpcRequestAsync('evm_mine', []);
     }
@@ -33,7 +34,8 @@ export class Blockchain {
 
   private async sendJSONRpcRequestAsync(
     method: string,
-    params: any[]
+    params: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
     return this._provider.send(method, params);
   }

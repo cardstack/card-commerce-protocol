@@ -1,17 +1,17 @@
-import chai, {expect} from 'chai';
+import chai, { expect } from 'chai';
 import asPromised from 'chai-as-promised';
-import {JsonRpcProvider} from '@ethersproject/providers';
-import {Blockchain} from '../utils/Blockchain';
-import {generatedWallets} from '../utils/generatedWallets';
-import {MarketFactory} from '../typechain/MarketFactory';
-import {BigNumber, BigNumberish, Wallet} from 'ethers';
-import {formatUnits} from '@ethersproject/units';
-import {AddressZero, MaxUint256} from '@ethersproject/constants';
-import {BaseErc20Factory} from '../typechain/BaseErc20Factory';
-import {Market} from '../typechain/Market';
-import {ExchangeMockFactory} from '../typechain/ExchangeMockFactory';
-import {LevelRegistrarFactory} from "../typechain";
-import Decimal from "../utils/Decimal";
+import { JsonRpcProvider } from '@ethersproject/providers';
+import { Blockchain } from '../utils/Blockchain';
+import { generatedWallets } from '../utils/generatedWallets';
+import { MarketFactory } from '../typechain/MarketFactory';
+import { BigNumber, BigNumberish, Wallet } from 'ethers';
+import { formatUnits } from '@ethersproject/units';
+import { AddressZero, MaxUint256 } from '@ethersproject/constants';
+import { BaseErc20Factory } from '../typechain/BaseErc20Factory';
+import { Market } from '../typechain/Market';
+import { ExchangeMockFactory } from '../typechain/ExchangeMockFactory';
+import { LevelRegistrarFactory } from '../typechain';
+import Decimal from '../utils/Decimal';
 
 chai.use(asPromised);
 
@@ -34,19 +34,19 @@ type Items = {
   tokenAddresses: string[];
   amounts: number[];
   quantity: number;
-}
+};
 
 type Discount = {
   levelRequired: LevelRequirement;
   discount: { value: BigNumberish };
-}
+};
 
 type LevelRequirement = {
   setter: string;
   registrar: string;
   token: string;
   levelLabel: string;
-}
+};
 
 describe('Market', () => {
   const [
@@ -58,31 +58,27 @@ describe('Market', () => {
 
   const defaultTokenId = 1;
   const defaultAsk = {
-    amount: 100
+    amount: 100,
   };
 
   const defaultLevelRequirement: LevelRequirement = {
     setter: deployerWallet.address,
     registrar: mockTokenWallet.address,
     token: mockTokenWallet.address,
-    levelLabel: "noob"
-  }
+    levelLabel: 'noob',
+  };
 
   const defaultDiscount: Discount = {
     levelRequired: null,
-    discount: Decimal.new(10)
-  }
+    discount: Decimal.new(10),
+  };
 
   let auctionAddress: string;
   let exchangeAddress: string;
   let levelRegistrarAddress: string;
 
-  function toNumWei(val: BigNumber) {
+  function toNumWei(val: BigNumberish) {
     return parseFloat(formatUnits(val, 'wei'));
-  }
-
-  function toNumEther(val: BigNumber) {
-    return parseFloat(formatUnits(val, 'ether'));
   }
 
   async function auctionAs(wallet: Wallet) {
@@ -98,11 +94,11 @@ describe('Market', () => {
       await new MarketFactory(deployerWallet).deploy()
     ).deployed();
     const exchange = await (
-        await new ExchangeMockFactory(deployerWallet).deploy()
+      await new ExchangeMockFactory(deployerWallet).deploy()
     ).deployed();
-    const levelRegistrar = await (
-        await new LevelRegistrarFactory(deployerWallet).deploy()
-    );
+    const levelRegistrar = await await new LevelRegistrarFactory(
+      deployerWallet
+    ).deploy();
     levelRegistrarAddress = levelRegistrar.address;
     exchangeAddress = exchange.address;
     auctionAddress = auction.address;
@@ -110,8 +106,8 @@ describe('Market', () => {
 
   async function configure() {
     return MarketFactory.connect(auctionAddress, deployerWallet).configure(
-        mockTokenWallet.address,
-        exchangeAddress
+      mockTokenWallet.address,
+      exchangeAddress
     );
   }
 
@@ -123,7 +119,7 @@ describe('Market', () => {
       merchant: merchant.address,
       tokenAddresses: [currency],
       amounts: [1000],
-      quantity: 10
+      quantity: 10,
     });
   }
 
@@ -214,13 +210,12 @@ describe('Market', () => {
   });
 
   describe('#setItems', () => {
-
     const defaultItems: Items = {
       merchant: deployerWallet.address,
       tokenAddresses: [],
       amounts: [1000],
-      quantity: 10
-    }
+      quantity: 10,
+    };
 
     let currency;
 
@@ -234,65 +229,85 @@ describe('Market', () => {
     it('should not set the items if the Merchant has not approved the Market contract', async () => {
       await mintCurrency(currency, otherWallet.address, 10000);
       const auction = await auctionAs(mockTokenWallet);
-      await expect(auction.setItems(defaultTokenId, {
-        merchant: otherWallet.address,
-        tokenAddresses: [currency],
-        amounts: [1000],
-        quantity: 10
-      })).rejected;
+      await expect(
+        auction.setItems(defaultTokenId, {
+          merchant: otherWallet.address,
+          tokenAddresses: [currency],
+          amounts: [1000],
+          quantity: 10,
+        })
+      ).rejected;
     });
 
     it('should set the items by the merchant', async () => {
-      expect(await configureItems(currency), "properly formed item setting transaction should pass");
+      expect(
+        await configureItems(currency),
+        'properly formed item setting transaction should pass'
+      );
       const auction = await auctionAs(mockTokenWallet);
       const block = await provider.getBlockNumber();
       const events = await auction.queryFilter(
-          auction.filters.ItemsSet(defaultTokenId, null),
-          block
+        auction.filters.ItemsSet(defaultTokenId, null),
+        block
       );
       expect(events.length).eq(1);
     });
 
-    it("should refund the merchant when items are updated", async() => {
+    it('should refund the merchant when items are updated', async () => {
       const contractPreBalance = await getBalance(currency, auctionAddress);
-      expect(contractPreBalance.toNumber()).eq(0, "contract should have no funds from the items");
+      expect(contractPreBalance.toNumber()).eq(
+        0,
+        'contract should have no funds from the items'
+      );
       // set the items twice to trigger a refund and resetting of the items
       await configureItems(currency);
       // mint 10k & deposit 10k = balance of 0
       const beforeBalance = await getBalance(currency, otherWallet.address);
       const contractBalance = await getBalance(currency, auctionAddress);
-      expect(contractBalance.toNumber()).eq(10000, "contract should have the merchants item deposit");
-      expect(beforeBalance.toNumber()).eq(0, "Merchant should have nothing left over from the item deposit");
+      expect(contractBalance.toNumber()).eq(
+        10000,
+        'contract should have the merchants item deposit'
+      );
+      expect(beforeBalance.toNumber()).eq(
+        0,
+        'Merchant should have nothing left over from the item deposit'
+      );
       // mint 10k & deposit 10k but get back original 10k = balance of 10k
       await configureItems(currency);
       const afterBalance = await getBalance(currency, otherWallet.address);
-      expect(afterBalance.toNumber()).eq(10000, "should have 10k left over after refund of original deposit + 10k mint")
+      expect(afterBalance.toNumber()).eq(
+        10000,
+        'should have 10k left over after refund of original deposit + 10k mint'
+      );
     });
 
-    it("should emit an event when items are updated", async () => {
+    it('should emit an event when items are updated', async () => {
       // set items twice, emitting two events
       await configureItems(currency);
       await configureItems(currency);
       const auction = await auctionAs(mockTokenWallet);
       const block = await provider.getBlockNumber();
       const eventsFromBlockZero = await auction.queryFilter(
-          auction.filters.ItemsSet(defaultTokenId, null),
-          0,
-          block
+        auction.filters.ItemsSet(defaultTokenId, null),
+        0,
+        block
       );
-      expect(eventsFromBlockZero.length).eq(2, "Should emit two events: one for the original set & another for the updated items setting");
+      expect(eventsFromBlockZero.length).eq(
+        2,
+        'Should emit two events: one for the original set & another for the updated items setting'
+      );
       const eventsFromLatestBlock = await auction.queryFilter(
-          auction.filters.ItemsSet(defaultTokenId, null),
-          block
+        auction.filters.ItemsSet(defaultTokenId, null),
+        block
       );
-      expect(eventsFromLatestBlock.length).eq(1, "update should trigger one ItemsSet event");
+      expect(eventsFromLatestBlock.length).eq(
+        1,
+        'update should trigger one ItemsSet event'
+      );
     });
-
-
   });
 
-  describe("#setLevelRequirements", () => {
-
+  describe('#setLevelRequirements', () => {
     let currency;
     let levelReq;
 
@@ -300,41 +315,72 @@ describe('Market', () => {
       await deploy();
       await configure();
       currency = await deployCurrency();
-      levelReq = {...defaultLevelRequirement, token: currency, registrar: levelRegistrarAddress, setter: otherWallet.address};
+      levelReq = {
+        ...defaultLevelRequirement,
+        token: currency,
+        registrar: levelRegistrarAddress,
+        setter: otherWallet.address,
+      };
     });
 
-    it("should not be able to set a level requirement if the level does not exist", async() => {
+    it('should not be able to set a level requirement if the level does not exist', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await expect(auction.setLevelRequirement(defaultTokenId, levelReq, otherWallet.address, currency)).rejectedWith("Market: level does not exist");
+      await expect(
+        auction.setLevelRequirement(
+          defaultTokenId,
+          levelReq,
+          otherWallet.address,
+          currency
+        )
+      ).rejectedWith('Market: level does not exist');
     });
 
-    it("should be able to set a level requirement", async() => {
+    it('should be able to set a level requirement', async () => {
       const auction = await auctionAs(mockTokenWallet);
       const registrar = await levelRegistrarAs(otherWallet);
-      await registrar.setLevels([{label: "noob", threshold: 0}], currency);
-      await expect(auction.setLevelRequirement(defaultTokenId, levelReq, otherWallet.address, currency));
+      await registrar.setLevels([{ label: 'noob', threshold: 0 }], currency);
+      await expect(
+        auction.setLevelRequirement(
+          defaultTokenId,
+          levelReq,
+          otherWallet.address,
+          currency
+        )
+      );
     });
 
-    it("should prevent a bid if the level requirement is not met", async() => {
+    it('should prevent a bid if the level requirement is not met', async () => {
       const auction = await auctionAs(mockTokenWallet);
       const registrar = await levelRegistrarAs(otherWallet);
-      await registrar.setLevels([{label: "noob", threshold: 1000000}], currency);
-      await auction.setLevelRequirement(defaultTokenId, levelReq, otherWallet.address, currency);
+      await registrar.setLevels(
+        [{ label: 'noob', threshold: 1000000 }],
+        currency
+      );
+      await auction.setLevelRequirement(
+        defaultTokenId,
+        levelReq,
+        otherWallet.address,
+        currency
+      );
       await configureItems(currency, deployerWallet);
       await mintCurrency(currency, bidderWallet.address, 500);
       await approveCurrency(currency, auction.address, bidderWallet);
-      await expect(auction.setBid(defaultTokenId, {
-          amount: 10,
-          currency: currency,
-          bidder: bidderWallet.address,
-          recipient: otherWallet.address
-        }, bidderWallet.address)).rejectedWith("Market: bidder does not meet the level requirement");
+      await expect(
+        auction.setBid(
+          defaultTokenId,
+          {
+            amount: 10,
+            currency: currency,
+            bidder: bidderWallet.address,
+            recipient: otherWallet.address,
+          },
+          bidderWallet.address
+        )
+      ).rejectedWith('Market: bidder does not meet the level requirement');
     });
-
   });
 
-  describe("#setDiscount", () => {
-
+  describe('#setDiscount', () => {
     let currency;
     let discount;
     let levelReq;
@@ -345,90 +391,152 @@ describe('Market', () => {
       await deploy();
       await configure();
       currency = await deployCurrency();
-      levelReq = {...defaultLevelRequirement, token: currency, registrar: levelRegistrarAddress};
-      discount = {...defaultDiscount, levelRequired: levelReq };
-      levelRequiredPro = {...levelReq, levelLabel: "pro", discount: 10};
-      proDiscount = {...discount, levelRequired: levelRequiredPro};
+      levelReq = {
+        ...defaultLevelRequirement,
+        token: currency,
+        registrar: levelRegistrarAddress,
+      };
+      discount = { ...defaultDiscount, levelRequired: levelReq };
+      levelRequiredPro = { ...levelReq, levelLabel: 'pro', discount: 10 };
+      proDiscount = { ...discount, levelRequired: levelRequiredPro };
     });
 
     it('should not be able to set a discount due to the level being absent', async () => {
       const auction = await auctionAs(mockTokenWallet);
-      await expect(auction.setDiscount(0, discount)).rejectedWith("Market: level does not exist");
+      await expect(auction.setDiscount(0, discount)).rejectedWith(
+        'Market: level does not exist'
+      );
     });
 
     it('should set a discount by the Merchant', async () => {
       const auction = await auctionAs(mockTokenWallet);
       const levelRegistrar = await levelRegistrarAs(deployerWallet);
-      await levelRegistrar.setLevels([{ label: "noob", threshold: 100 }], currency);
+      await levelRegistrar.setLevels(
+        [{ label: 'noob', threshold: 100 }],
+        currency
+      );
       await expect(auction.setDiscount(0, discount)).fulfilled;
       const block = await provider.getBlockNumber();
       const events = await auction.queryFilter(
-          auction.filters.DiscountSet(0, null),
-          block
+        auction.filters.DiscountSet(0, null),
+        block
       );
       expect(events.length).to.eq(1);
     });
 
-    it("should apply the correct discount on a bid", async() => {
+    it('should apply the correct discount on a bid', async () => {
       const auction = await auctionAs(mockTokenWallet);
       const levelRegistrar = await levelRegistrarAs(deployerWallet);
-      await levelRegistrar.setLevels([{ label: "noob", threshold: 100 }], currency);
+      await levelRegistrar.setLevels(
+        [{ label: 'noob', threshold: 100 }],
+        currency
+      );
       await auction.setDiscount(1, discount);
       await configureItems(currency, otherWallet);
       await mintCurrency(currency, bidderWallet.address, 1000);
       await approveCurrency(currency, auction.address, bidderWallet);
       const beforeBalance = await getBalance(currency, bidderWallet.address);
-      await auction.setBid(1, { amount: 100, currency: currency, bidder: bidderWallet.address, recipient: mockTokenWallet.address}, bidderWallet.address);
+      await auction.setBid(
+        1,
+        {
+          amount: 100,
+          currency: currency,
+          bidder: bidderWallet.address,
+          recipient: mockTokenWallet.address,
+        },
+        bidderWallet.address
+      );
       const afterBalance = await getBalance(currency, bidderWallet.address);
       const bidMinusDiscount = 90;
-      expect(afterBalance.toNumber()).eq((beforeBalance.toNumber() - bidMinusDiscount), "discount of 10% should be applied");
+      expect(afterBalance.toNumber()).eq(
+        beforeBalance.toNumber() - bidMinusDiscount,
+        'discount of 10% should be applied'
+      );
     });
 
-    it("should apply the correct discount on a successful bid", async() => {
+    it('should apply the correct discount on a successful bid', async () => {
       const auction = await auctionAs(mockTokenWallet);
       const levelRegistrar = await levelRegistrarAs(deployerWallet);
-      await levelRegistrar.setLevels([{ label: "noob", threshold: 100 }], currency);
+      await levelRegistrar.setLevels(
+        [{ label: 'noob', threshold: 100 }],
+        currency
+      );
       await auction.setDiscount(1, discount);
       await configureItems(currency, otherWallet);
       await auction.setAsk(1, { amount: 100 });
       await mintCurrency(currency, bidderWallet.address, 1000);
       await approveCurrency(currency, auction.address, bidderWallet);
       const beforeBalance = await getBalance(currency, bidderWallet.address);
-      await auction.setBid(1, { amount: 100, currency: currency, bidder: bidderWallet.address, recipient: mockTokenWallet.address}, bidderWallet.address);
+      await auction.setBid(
+        1,
+        {
+          amount: 100,
+          currency: currency,
+          bidder: bidderWallet.address,
+          recipient: mockTokenWallet.address,
+        },
+        bidderWallet.address
+      );
       const afterBalance = await getBalance(currency, bidderWallet.address);
       const bidMinusDiscount = 90;
-      expect(afterBalance.toNumber()).eq((beforeBalance.toNumber() - bidMinusDiscount) + 1000, "discount of 10% should be applied with 1k tokens from merchant");
+      expect(afterBalance.toNumber()).eq(
+        beforeBalance.toNumber() - bidMinusDiscount + 1000,
+        'discount of 10% should be applied with 1k tokens from merchant'
+      );
     });
 
-    it("should not apply a discount if the buyer is not eligible on a successful bid", async() => {
+    it('should not apply a discount if the buyer is not eligible on a successful bid', async () => {
       const auction = await auctionAs(mockTokenWallet);
       const levelRegistrar = await levelRegistrarAs(deployerWallet);
-      await levelRegistrar.setLevels([{ label: "pro", threshold: 100000000 }], currency);
+      await levelRegistrar.setLevels(
+        [{ label: 'pro', threshold: 100000000 }],
+        currency
+      );
       await auction.setDiscount(1, proDiscount);
       await configureItems(currency, otherWallet);
       await auction.setAsk(1, { amount: 100 });
       await mintCurrency(currency, bidderWallet.address, 1000);
       await approveCurrency(currency, auction.address, bidderWallet);
-      await auction.setBid(1, { amount: 100, currency: currency, bidder: bidderWallet.address, recipient: otherWallet.address}, bidderWallet.address);
+      await auction.setBid(
+        1,
+        {
+          amount: 100,
+          currency: currency,
+          bidder: bidderWallet.address,
+          recipient: otherWallet.address,
+        },
+        bidderWallet.address
+      );
       const afterBalance = await getBalance(currency, bidderWallet.address);
       // 100 bid - no discount + 1k from merchant item
-      expect(afterBalance.toNumber()).eq(1900, "no discount should be applied");
+      expect(afterBalance.toNumber()).eq(1900, 'no discount should be applied');
     });
 
-    it("should not apply a discount if the buyer is not eligible", async() => {
+    it('should not apply a discount if the buyer is not eligible', async () => {
       const auction = await auctionAs(mockTokenWallet);
       const levelRegistrar = await levelRegistrarAs(deployerWallet);
-      await levelRegistrar.setLevels([{ label: "pro", threshold: 100000000 }], currency);
+      await levelRegistrar.setLevels(
+        [{ label: 'pro', threshold: 100000000 }],
+        currency
+      );
       await auction.setDiscount(1, proDiscount);
       await configureItems(currency, otherWallet);
       await mintCurrency(currency, bidderWallet.address, 1000);
       await approveCurrency(currency, auction.address, bidderWallet);
-      await auction.setBid(1, { amount: 100, currency: currency, bidder: bidderWallet.address, recipient: otherWallet.address}, bidderWallet.address);
+      await auction.setBid(
+        1,
+        {
+          amount: 100,
+          currency: currency,
+          bidder: bidderWallet.address,
+          recipient: otherWallet.address,
+        },
+        bidderWallet.address
+      );
       const afterBalance = await getBalance(currency, bidderWallet.address);
       // 100 bid - no discount
-      expect(afterBalance.toNumber()).eq(900, "no discount should be applied");
+      expect(afterBalance.toNumber()).eq(900, 'no discount should be applied');
     });
-
   });
 
   describe('#setAsk', () => {
@@ -465,30 +573,29 @@ describe('Market', () => {
       expect(toNumWei(logDescription.args.tokenId)).to.eq(defaultTokenId);
       expect(toNumWei(logDescription.args.ask.amount)).to.eq(defaultAsk.amount);
     });
-
   });
 
   describe('#setBid', () => {
     let currency: string;
-    const defaultBid = {
-      amount: 100,
-      currency: currency,
-      bidder: bidderWallet.address,
-      recipient: otherWallet.address,
-      spender: bidderWallet.address
-    };
+    let defaultBid;
 
     beforeEach(async () => {
       await deploy();
       await configure();
       currency = await deployCurrency();
-      defaultBid.currency = currency;
+      defaultBid = {
+        amount: 100,
+        currency,
+        bidder: bidderWallet.address,
+        recipient: otherWallet.address,
+        spender: bidderWallet.address,
+      };
     });
 
-    it("should revert if no items are available", async() => {
+    it('should revert if no items are available', async () => {
       const auction = await auctionAs(mockTokenWallet);
       await expect(setBid(auction, defaultBid, defaultTokenId)).rejectedWith(
-          'Market: No items left for sale'
+        'Market: No items left for sale'
       );
     });
 
@@ -519,17 +626,20 @@ describe('Market', () => {
       );
     });
 
-    it("should revert if the bid currency has no SPEND value", async() => {
+    it('should revert if the bid currency has no SPEND value', async () => {
       await configureItems(currency);
       const auction = await auctionAs(mockTokenWallet);
       await mintCurrency(currency, defaultBid.bidder, defaultBid.amount);
       await approveCurrency(currency, auction.address, bidderWallet);
       await expect(
-          setBid(
-              auction,
-              { ...defaultBid, currency: "0x0000000000000000000000000000000000000001" },
-              defaultTokenId
-          )
+        setBid(
+          auction,
+          {
+            ...defaultBid,
+            currency: '0x0000000000000000000000000000000000000001',
+          },
+          defaultTokenId
+        )
       ).rejectedWith('ExchangeMock: this address has no SPEND value');
     });
 

@@ -1,27 +1,16 @@
 import { BaseErc20Factory, InventoryFactory } from '../typechain';
-import { BigNumber, BigNumberish, Bytes, Wallet } from 'ethers';
-import { MaxUint256, AddressZero } from '@ethersproject/constants';
+import { BigNumber, BigNumberish, Wallet } from 'ethers';
+import { MaxUint256 } from '@ethersproject/constants';
 import { generatedWallets } from '../utils/generatedWallets';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { formatUnits } from '@ethersproject/units';
-import {
-  recoverTypedMessage,
-  recoverTypedSignature,
-  signTypedData,
-} from 'eth-sig-util';
-import {
-  bufferToHex,
-  ecrecover,
-  fromRpcSig,
-  pubToAddress,
-} from 'ethereumjs-util';
-import { toUtf8Bytes } from 'ethers/lib/utils';
-import { keccak256 } from '@ethersproject/keccak256';
+import { signTypedData } from 'eth-sig-util';
+import { fromRpcSig } from 'ethereumjs-util';
 
 const provider = new JsonRpcProvider();
 const [deployerWallet] = generatedWallets(provider);
 
-export async function deployCurrency() {
+export async function deployCurrency(): Promise<string> {
   const currency = await new BaseErc20Factory(deployerWallet).deploy(
     'test',
     'TEST',
@@ -34,7 +23,7 @@ export async function mintCurrency(
   currency: string,
   to: string,
   value: number
-) {
+): Promise<void> {
   await BaseErc20Factory.connect(currency, deployerWallet).mint(to, value);
 }
 
@@ -42,25 +31,25 @@ export async function approveCurrency(
   currency: string,
   spender: string,
   owner: Wallet
-) {
+): Promise<void> {
   await BaseErc20Factory.connect(currency, owner).approve(spender, MaxUint256);
 }
-export async function getBalance(currency: string, owner: string) {
+export async function getBalance(
+  currency: string,
+  owner: string
+): Promise<BigNumberish> {
   return BaseErc20Factory.connect(currency, deployerWallet).balanceOf(owner);
 }
 
-function revert(message: string) {
-  return `VM Exception while processing transaction: revert ${message}`;
-}
-export function toNumWei(val: BigNumber) {
+export function toNumWei(val: BigNumberish): number {
   return parseFloat(formatUnits(val, 'wei'));
 }
 
 export type EIP712Sig = {
   deadline: BigNumberish;
-  v: any;
-  r: any;
-  s: any;
+  v: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  r: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  s: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 };
 
 export async function signPermit(
@@ -69,68 +58,65 @@ export async function signPermit(
   tokenAddress: string,
   tokenId: number,
   chainId: number
-) {
-  return new Promise<EIP712Sig>(async (res, reject) => {
-    let nonce;
-    const inventoryContract = InventoryFactory.connect(tokenAddress, owner);
+): Promise<EIP712Sig> {
+  let nonce;
+  const inventoryContract = InventoryFactory.connect(tokenAddress, owner);
 
-    try {
-      nonce = (
-        await inventoryContract.permitNonces(owner.address, tokenId)
-      ).toNumber();
-    } catch (e) {
-      console.error('NONCE', e);
-      reject(e);
-      return;
-    }
+  try {
+    nonce = (
+      await inventoryContract.permitNonces(owner.address, tokenId)
+    ).toNumber();
+  } catch (e) {
+    console.error('NONCE', e);
+    throw e;
+  }
 
-    const deadline = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24; // 24 hours
-    const name = await inventoryContract.name();
+  const deadline = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24; // 24 hours
+  const name = await inventoryContract.name();
 
-    try {
-      const sig = signTypedData(Buffer.from(owner.privateKey.slice(2), 'hex'), {
-        data: {
-          types: {
-            EIP712Domain: [
-              { name: 'name', type: 'string' },
-              { name: 'version', type: 'string' },
-              { name: 'chainId', type: 'uint256' },
-              { name: 'verifyingContract', type: 'address' },
-            ],
-            Permit: [
-              { name: 'spender', type: 'address' },
-              { name: 'tokenId', type: 'uint256' },
-              { name: 'nonce', type: 'uint256' },
-              { name: 'deadline', type: 'uint256' },
-            ],
-          },
-          primaryType: 'Permit',
-          domain: {
-            name,
-            version: '1',
-            chainId,
-            verifyingContract: inventoryContract.address,
-          },
-          message: {
-            spender: toAddress,
-            tokenId,
-            nonce,
-            deadline,
-          },
+  try {
+    const sig = signTypedData(Buffer.from(owner.privateKey.slice(2), 'hex'), {
+      data: {
+        types: {
+          EIP712Domain: [
+            { name: 'name', type: 'string' },
+            { name: 'version', type: 'string' },
+            { name: 'chainId', type: 'uint256' },
+            { name: 'verifyingContract', type: 'address' },
+          ],
+          Permit: [
+            { name: 'spender', type: 'address' },
+            { name: 'tokenId', type: 'uint256' },
+            { name: 'nonce', type: 'uint256' },
+            { name: 'deadline', type: 'uint256' },
+          ],
         },
-      });
-      const response = fromRpcSig(sig);
-      res({
-        r: response.r,
-        s: response.s,
-        v: response.v,
-        deadline: deadline.toString(),
-      });
-    } catch (e) {
-      console.error(e);
-      reject(e);
-    }
-  });
+        primaryType: 'Permit',
+        domain: {
+          name,
+          version: '1',
+          chainId,
+          verifyingContract: inventoryContract.address,
+        },
+        message: {
+          spender: toAddress,
+          tokenId,
+          nonce,
+          deadline,
+        },
+      },
+    });
+    const response = fromRpcSig(sig);
+    return {
+      r: response.r,
+      s: response.s,
+      v: response.v,
+      deadline: deadline.toString(),
+    };
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
 }
 
 export async function signMintWithSig(
@@ -140,64 +126,62 @@ export async function signMintWithSig(
   contentHash: string,
   metadataHash: string,
   chainId: number
-) {
-  return new Promise<EIP712Sig>(async (res, reject) => {
-    let nonce;
-    const inventoryContract = InventoryFactory.connect(tokenAddress, owner);
+): Promise<EIP712Sig> {
+  let nonce;
+  const inventoryContract = InventoryFactory.connect(tokenAddress, owner);
 
-    try {
-      nonce = (await inventoryContract.mintWithSigNonces(creator)).toNumber();
-    } catch (e) {
-      console.error('NONCE', e);
-      reject(e);
-      return;
-    }
+  try {
+    nonce = (await inventoryContract.mintWithSigNonces(creator)).toNumber();
+  } catch (e) {
+    console.error('NONCE', e);
+    throw e;
+    return;
+  }
 
-    const deadline = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24; // 24 hours
-    const name = await inventoryContract.name();
+  const deadline = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24; // 24 hours
+  const name = await inventoryContract.name();
 
-    try {
-      const sig = signTypedData(Buffer.from(owner.privateKey.slice(2), 'hex'), {
-        data: {
-          types: {
-            EIP712Domain: [
-              { name: 'name', type: 'string' },
-              { name: 'version', type: 'string' },
-              { name: 'chainId', type: 'uint256' },
-              { name: 'verifyingContract', type: 'address' },
-            ],
-            MintWithSig: [
-              { name: 'contentHash', type: 'bytes32' },
-              { name: 'metadataHash', type: 'bytes32' },
-              { name: 'nonce', type: 'uint256' },
-              { name: 'deadline', type: 'uint256' },
-            ],
-          },
-          primaryType: 'MintWithSig',
-          domain: {
-            name,
-            version: '1',
-            chainId,
-            verifyingContract: inventoryContract.address,
-          },
-          message: {
-            contentHash,
-            metadataHash,
-            nonce,
-            deadline,
-          },
+  try {
+    const sig = signTypedData(Buffer.from(owner.privateKey.slice(2), 'hex'), {
+      data: {
+        types: {
+          EIP712Domain: [
+            { name: 'name', type: 'string' },
+            { name: 'version', type: 'string' },
+            { name: 'chainId', type: 'uint256' },
+            { name: 'verifyingContract', type: 'address' },
+          ],
+          MintWithSig: [
+            { name: 'contentHash', type: 'bytes32' },
+            { name: 'metadataHash', type: 'bytes32' },
+            { name: 'nonce', type: 'uint256' },
+            { name: 'deadline', type: 'uint256' },
+          ],
         },
-      });
-      const response = fromRpcSig(sig);
-      res({
-        r: response.r,
-        s: response.s,
-        v: response.v,
-        deadline: deadline.toString(),
-      });
-    } catch (e) {
-      console.error(e);
-      reject(e);
-    }
-  });
+        primaryType: 'MintWithSig',
+        domain: {
+          name,
+          version: '1',
+          chainId,
+          verifyingContract: inventoryContract.address,
+        },
+        message: {
+          contentHash,
+          metadataHash,
+          nonce,
+          deadline,
+        },
+      },
+    });
+    const response = fromRpcSig(sig);
+    return {
+      r: response.r,
+      s: response.s,
+      v: response.v,
+      deadline: deadline.toString(),
+    };
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
 }

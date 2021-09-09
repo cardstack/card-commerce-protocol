@@ -6,8 +6,7 @@ import { generatedWallets } from '../utils/generatedWallets';
 import { MarketFactory } from '../typechain/MarketFactory';
 import { ethers, Wallet } from 'ethers';
 import { AddressZero } from '@ethersproject/constants';
-import Decimal from '../utils/Decimal';
-import { BigNumber, BigNumberish, Bytes } from 'ethers';
+import { BigNumberish, Bytes } from 'ethers';
 import { InventoryFactory } from '../typechain/InventoryFactory';
 import { Inventory } from '../typechain/Inventory';
 import {
@@ -23,7 +22,6 @@ import {
 import {
   arrayify,
   formatBytes32String,
-  formatUnits,
   sha256,
 } from 'ethers/lib/utils';
 import exp from 'constants';

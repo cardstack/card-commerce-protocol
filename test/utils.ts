@@ -1,5 +1,5 @@
 import { BaseErc20Factory, InventoryFactory } from '../typechain';
-import { BigNumber, BigNumberish, Wallet } from 'ethers';
+import { BigNumberish, Wallet } from 'ethers';
 import { MaxUint256 } from '@ethersproject/constants';
 import { generatedWallets } from '../utils/generatedWallets';
 import { JsonRpcProvider } from '@ethersproject/providers';

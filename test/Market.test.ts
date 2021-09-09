@@ -4,7 +4,7 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import { Blockchain } from '../utils/Blockchain';
 import { generatedWallets } from '../utils/generatedWallets';
 import { MarketFactory } from '../typechain/MarketFactory';
-import { BigNumber, BigNumberish, Wallet } from 'ethers';
+import { BigNumberish, Wallet } from 'ethers';
 import { formatUnits } from '@ethersproject/units';
 import { AddressZero, MaxUint256 } from '@ethersproject/constants';
 import { BaseErc20Factory } from '../typechain/BaseErc20Factory';

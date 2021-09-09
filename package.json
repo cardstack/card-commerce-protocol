@@ -48,6 +48,7 @@
     "chokidar": "^3.4.3",
     "dotenv": "^8.2.0",
     "eslint": "^7.32.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "eth-sig-util": "^2.5.3",
     "ethereum-waffle": "^2.3.0",
     "ethereumjs-util": "^7.0.7",

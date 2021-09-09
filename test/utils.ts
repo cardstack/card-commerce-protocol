@@ -135,7 +135,6 @@ export async function signMintWithSig(
   } catch (e) {
     console.error('NONCE', e);
     throw e;
-    return;
   }
 
   const deadline = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24; // 24 hours

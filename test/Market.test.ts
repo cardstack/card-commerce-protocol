@@ -15,8 +15,8 @@ import Decimal from "../utils/Decimal";
 
 chai.use(asPromised);
 
-let provider = new JsonRpcProvider();
-let blockchain = new Blockchain(provider);
+const provider = new JsonRpcProvider();
+const blockchain = new Blockchain(provider);
 
 type Ask = {
   amount: BigNumberish;
@@ -49,15 +49,15 @@ type LevelRequirement = {
 }
 
 describe('Market', () => {
-  let [
+  const [
     deployerWallet,
     bidderWallet,
     mockTokenWallet,
     otherWallet,
   ] = generatedWallets(provider);
 
-  let defaultTokenId = 1;
-  let defaultAsk = {
+  const defaultTokenId = 1;
+  const defaultAsk = {
     amount: 100
   };
 
@@ -215,7 +215,7 @@ describe('Market', () => {
 
   describe('#setItems', () => {
 
-    let defaultItems: Items = {
+    const defaultItems: Items = {
       merchant: deployerWallet.address,
       tokenAddresses: [],
       amounts: [1000],

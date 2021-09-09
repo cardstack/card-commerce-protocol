@@ -32,8 +32,8 @@ import {ExchangeMock, ExchangeMockFactory, LevelRegistrarFactory} from "../typec
 
 chai.use(asPromised);
 
-let provider = new JsonRpcProvider();
-let blockchain = new Blockchain(provider);
+const provider = new JsonRpcProvider();
+const blockchain = new Blockchain(provider);
 
 let contentHex: string;
 let contentHash: string;
@@ -46,8 +46,8 @@ let metadataHex: string;
 let metadataHash: string;
 let metadataHashBytes: Bytes;
 
-let tokenURI = 'www.example.com';
-let metadataURI = 'www.example2.com';
+const tokenURI = 'www.example.com';
+const metadataURI = 'www.example2.com';
 
 type InventoryData = {
   listingURI: string;
@@ -68,7 +68,7 @@ type Bid = {
 };
 
 describe('Inventory', () => {
-  let [
+  const [
     deployerWallet,
     bidderWallet,
     merchantWallet,
@@ -78,8 +78,8 @@ describe('Inventory', () => {
     nonBidderWallet,
   ] = generatedWallets(provider);
 
-  let defaultTokenId = 1;
-  let defaultAsk = {
+  const defaultTokenId = 1;
+  const defaultAsk = {
     amount: 100
   };
   const defaultBid = (

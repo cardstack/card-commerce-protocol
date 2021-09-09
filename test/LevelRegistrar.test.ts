@@ -10,8 +10,8 @@ import {Wallet} from "ethers";
 
 chai.use(asPromised);
 
-let provider = new JsonRpcProvider();
-let blockchain = new Blockchain(provider);
+const provider = new JsonRpcProvider();
+const blockchain = new Blockchain(provider);
 
 type Level = {
     label: string;
@@ -26,7 +26,7 @@ type CrossLevel = {
 }
 
 describe('Level Registrar', () => {
-    let [
+    const [
         deployerWallet,
         otherWallet,
     ] = generatedWallets(provider);

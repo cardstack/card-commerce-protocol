@@ -18,8 +18,8 @@ import {
 import { toUtf8Bytes } from 'ethers/lib/utils';
 import { keccak256 } from '@ethersproject/keccak256';
 
-let provider = new JsonRpcProvider();
-let [deployerWallet] = generatedWallets(provider);
+const provider = new JsonRpcProvider();
+const [deployerWallet] = generatedWallets(provider);
 
 export async function deployCurrency() {
   const currency = await new BaseErc20Factory(deployerWallet).deploy(

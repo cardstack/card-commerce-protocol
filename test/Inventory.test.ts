@@ -19,14 +19,14 @@ import {
   signPermit,
   toNumWei,
 } from './utils';
-import {
-  arrayify,
-  formatBytes32String,
-  sha256,
-} from 'ethers/lib/utils';
+import { arrayify, formatBytes32String, sha256 } from 'ethers/lib/utils';
 import exp from 'constants';
-import {BytesLike} from "@ethersproject/bytes";
-import {ExchangeMock, ExchangeMockFactory, LevelRegistrarFactory} from "../typechain";
+import { BytesLike } from '@ethersproject/bytes';
+import {
+  ExchangeMock,
+  ExchangeMockFactory,
+  LevelRegistrarFactory,
+} from '../typechain';
 
 chai.use(asPromised);
 
@@ -78,7 +78,7 @@ describe('Inventory', () => {
 
   const defaultTokenId = 1;
   const defaultAsk = {
-    amount: 100
+    amount: 100,
   };
   const defaultBid = (
     currency: string,
@@ -88,7 +88,7 @@ describe('Inventory', () => {
     amount: 100,
     currency,
     bidder,
-    recipient: recipient || bidder
+    recipient: recipient || bidder,
   });
 
   let auctionAddress: string;
@@ -109,23 +109,26 @@ describe('Inventory', () => {
     tokenAddress = token.address;
 
     const registrar = await (
-        await new LevelRegistrarFactory(deployerWallet).deploy()
+      await new LevelRegistrarFactory(deployerWallet).deploy()
     ).deployed();
     registarAddress = registrar.address;
 
-    const exchangeMock = await (
-        await new ExchangeMockFactory(deployerWallet).deploy()
-    );
+    const exchangeMock = await await new ExchangeMockFactory(
+      deployerWallet
+    ).deploy();
 
     await auction.configure(tokenAddress, exchangeMock.address);
   }
 
   async function setDefaultLevel(wallet: Wallet) {
     const defaultLevel = {
-      label: "noob",
-      threshold: 0
-    }
-    await LevelRegistrarFactory.connect(registarAddress, wallet).setLevels([defaultLevel], tokenAddress);
+      label: 'noob',
+      threshold: 0,
+    };
+    await LevelRegistrarFactory.connect(registarAddress, wallet).setLevels(
+      [defaultLevel],
+      tokenAddress
+    );
   }
 
   async function mint(
@@ -183,7 +186,11 @@ describe('Inventory', () => {
     return token.acceptBid(tokenId, bid);
   }
 
-  async function setItems(currencyAddr: string, tokenId = 0, wallet = merchantWallet) {
+  async function setItems(
+    currencyAddr: string,
+    tokenId = 0,
+    wallet = merchantWallet
+  ) {
     await mintCurrency(currencyAddr, wallet.address, 10000);
     await approveCurrency(currencyAddr, auctionAddress, wallet);
     const inventory = await tokenAs(wallet);
@@ -191,12 +198,16 @@ describe('Inventory', () => {
       merchant: wallet.address,
       tokenAddresses: [currencyAddr],
       amounts: [1000],
-      quantity: 10
+      quantity: 10,
     });
   }
 
   // Trade a token a few times and create some open bids
-  async function setupAuction(currencyAddr: string, tokenId = 0, merchant = merchantWallet) {
+  async function setupAuction(
+    currencyAddr: string,
+    tokenId = 0,
+    merchant = merchantWallet
+  ) {
     const asMerchant = await tokenAs(merchant);
     const asPrevOwner = await tokenAs(prevOwnerWallet);
     const asOwner = await tokenAs(ownerWallet);
@@ -280,13 +291,7 @@ describe('Inventory', () => {
       const token = await tokenAs(merchantWallet);
 
       await expect(
-        mint(
-          token,
-          metadataURI,
-          tokenURI,
-          contentHashBytes,
-          metadataHashBytes
-        )
+        mint(token, metadataURI, tokenURI, contentHashBytes, metadataHashBytes)
       ).fulfilled;
 
       const t = await token.tokenByIndex(0);
@@ -325,23 +330,11 @@ describe('Inventory', () => {
       const token = await tokenAs(merchantWallet);
 
       await expect(
-        mint(
-          token,
-          metadataURI,
-          tokenURI,
-          contentHashBytes,
-          metadataHashBytes
-        )
+        mint(token, metadataURI, tokenURI, contentHashBytes, metadataHashBytes)
       ).fulfilled;
 
       await expect(
-        mint(
-          token,
-          metadataURI,
-          tokenURI,
-          contentHashBytes,
-          metadataHashBytes
-        )
+        mint(token, metadataURI, tokenURI, contentHashBytes, metadataHashBytes)
       ).rejectedWith(
         'Inventory: a token has already been created with this content hash'
       );
@@ -386,12 +379,12 @@ describe('Inventory', () => {
     it('should mint a token for a given merchant with a valid signature', async () => {
       const token = await tokenAs(otherWallet);
       const sig = await signMintWithSig(
-          merchantWallet,
-          token.address,
-          merchantWallet.address,
-          contentHash,
-          metadataHash,
-          1
+        merchantWallet,
+        token.address,
+        merchantWallet.address,
+        contentHash,
+        metadataHash,
+        1
       );
 
       const beforeNonce = await token.mintWithSigNonces(merchantWallet.address);
@@ -784,7 +777,7 @@ describe('Inventory', () => {
 
       await expect(
         token.transferFrom(ownerWallet.address, otherWallet.address, 0)
-      ).rejectedWith("Transfer is blocked");
+      ).rejectedWith('Transfer is blocked');
     });
   });
 
@@ -812,13 +805,17 @@ describe('Inventory', () => {
     it('should revert when the caller is not the owner or a creator', async () => {
       const token = await tokenAs(otherWallet);
 
-      await expect(token.burn(0)).rejectedWith('Inventory: Only approved or owner');
+      await expect(token.burn(0)).rejectedWith(
+        'Inventory: Only approved or owner'
+      );
     });
 
     it('should revert if the token id does not exist', async () => {
       const token = await tokenAs(merchantWallet);
 
-      await expect(token.burn(100)).rejectedWith('Inventory: nonexistent token');
+      await expect(token.burn(100)).rejectedWith(
+        'Inventory: nonexistent token'
+      );
     });
 
     it('should clear approvals, set remove owner, but maintain tokenURI and contentHash when the owner is creator and caller', async () => {
@@ -878,19 +875,18 @@ describe('Inventory', () => {
     });
   });
 
-  describe('#setDiscount', async() => {
-
+  describe('#setDiscount', async () => {
     const defaultLevelRequirement = {
       setter: merchantWallet.address,
       registrar: undefined,
       token: undefined,
-      levelLabel: "noob"
-    }
+      levelLabel: 'noob',
+    };
 
     const defaultDiscount = {
       levelRequired: defaultLevelRequirement,
-      discount: { value: 1 }
-    }
+      discount: { value: 1 },
+    };
 
     beforeEach(async () => {
       await deploy();
@@ -898,59 +894,66 @@ describe('Inventory', () => {
       defaultLevelRequirement.registrar = registarAddress;
       await setDefaultLevel(merchantWallet);
       await mint(
-          await tokenAs(merchantWallet),
-          metadataURI,
-          '1111',
-          otherContentHashBytes,
-          metadataHashBytes
+        await tokenAs(merchantWallet),
+        metadataURI,
+        '1111',
+        otherContentHashBytes,
+        metadataHashBytes
       );
     });
 
     it('should revert if the token id does not exist', async () => {
       const token = await tokenAs(merchantWallet);
-      await expect(token.setDiscount(100, defaultDiscount)).rejectedWith('Inventory: nonexistent token');
+      await expect(token.setDiscount(100, defaultDiscount)).rejectedWith(
+        'Inventory: nonexistent token'
+      );
     });
 
-    it("should not be able to set a discount if not approved or merchant", async() => {
+    it('should not be able to set a discount if not approved or merchant', async () => {
       const token = await tokenAs(otherWallet);
-      await expect(token.setDiscount(0, defaultDiscount)).rejectedWith('Inventory: Only approved or owner');
+      await expect(token.setDiscount(0, defaultDiscount)).rejectedWith(
+        'Inventory: Only approved or owner'
+      );
     });
 
-    it("should be able to set a discount if approved or merchant", async() => {
+    it('should be able to set a discount if approved or merchant', async () => {
       const token = await tokenAs(merchantWallet);
       await expect(token.setDiscount(0, defaultDiscount)).fulfilled;
       await token.approve(otherWallet.address, 0);
       const tokenAsOtherWallet = await tokenAs(otherWallet);
-      await expect(tokenAsOtherWallet.setDiscount(0, defaultDiscount)).fulfilled;
+      await expect(tokenAsOtherWallet.setDiscount(0, defaultDiscount))
+        .fulfilled;
     });
-
   });
 
-  describe('#setItems', async() => {
-
+  describe('#setItems', async () => {
     let currency;
 
     beforeEach(async () => {
       await deploy();
       await mint(
-          await tokenAs(merchantWallet),
-          metadataURI,
-          '1111',
-          otherContentHashBytes,
-          metadataHashBytes
+        await tokenAs(merchantWallet),
+        metadataURI,
+        '1111',
+        otherContentHashBytes,
+        metadataHashBytes
       );
       currency = await deployCurrency();
     });
 
     it('should revert if the token id does not exist', async () => {
-      await expect(setItems(currency, 100)).rejectedWith('Inventory: nonexistent token');
+      await expect(setItems(currency, 100)).rejectedWith(
+        'Inventory: nonexistent token'
+      );
     });
 
-    it("should not be able to set items if not approved or merchant", async() => {
-      await expect(setItems(currency, 0, otherWallet)).rejectedWith('Inventory: Only approved or owner');
+    it('should not be able to set items if not approved or merchant', async () => {
+      await expect(setItems(currency, 0, otherWallet)).rejectedWith(
+        'Inventory: Only approved or owner'
+      );
     });
 
-    it("should be able to set items if approved or merchant", async() => {
+    it('should be able to set items if approved or merchant', async () => {
       const token = await tokenAs(merchantWallet);
       await token.approve(otherWallet.address, 0);
       await expect(setItems(currency, 0, otherWallet)).fulfilled;
@@ -958,23 +961,22 @@ describe('Inventory', () => {
     });
   });
 
-  describe("#setLevelRequirements", () => {
-
+  describe('#setLevelRequirements', () => {
     const defaultLevelRequirement = {
       setter: deployerWallet.address,
       registrar: undefined,
       token: undefined,
-      levelLabel: "noob"
-    }
+      levelLabel: 'noob',
+    };
 
     beforeEach(async () => {
       await deploy();
       await mint(
-          await tokenAs(merchantWallet),
-          metadataURI,
-          '1111',
-          otherContentHashBytes,
-          metadataHashBytes
+        await tokenAs(merchantWallet),
+        metadataURI,
+        '1111',
+        otherContentHashBytes,
+        metadataHashBytes
       );
       defaultLevelRequirement.token = tokenAddress;
       defaultLevelRequirement.registrar = registarAddress;
@@ -982,21 +984,49 @@ describe('Inventory', () => {
 
     it('should revert if the token id does not exist', async () => {
       const token = await tokenAs(merchantWallet);
-      await expect(token.setLevelRequirement(100, defaultLevelRequirement, merchantWallet.address, token.address)).rejectedWith('Inventory: nonexistent token');
+      await expect(
+        token.setLevelRequirement(
+          100,
+          defaultLevelRequirement,
+          merchantWallet.address,
+          token.address
+        )
+      ).rejectedWith('Inventory: nonexistent token');
     });
 
-    it("should not be able to set a level requirement if not approved or owner", async() => {
-        const token = await tokenAs(otherWallet);
-        await expect(token.setLevelRequirement(0, defaultLevelRequirement, merchantWallet.address, token.address)).rejectedWith('Inventory: Only approved or owner');
+    it('should not be able to set a level requirement if not approved or owner', async () => {
+      const token = await tokenAs(otherWallet);
+      await expect(
+        token.setLevelRequirement(
+          0,
+          defaultLevelRequirement,
+          merchantWallet.address,
+          token.address
+        )
+      ).rejectedWith('Inventory: Only approved or owner');
     });
 
-    it("should be able to set a level requirement if approved or owner", async() => {
+    it('should be able to set a level requirement if approved or owner', async () => {
       const token = await tokenAs(merchantWallet);
       await token.approve(otherWallet.address, 0);
       const tokenAsApproved = await tokenAs(otherWallet);
       await setDefaultLevel(merchantWallet);
-      await expect(token.setLevelRequirement(0, defaultLevelRequirement, merchantWallet.address, token.address)).fulfilled;
-      await expect(tokenAsApproved.setLevelRequirement(0, defaultLevelRequirement, merchantWallet.address, token.address)).fulfilled;
+      await expect(
+        token.setLevelRequirement(
+          0,
+          defaultLevelRequirement,
+          merchantWallet.address,
+          token.address
+        )
+      ).fulfilled;
+      await expect(
+        tokenAsApproved.setLevelRequirement(
+          0,
+          defaultLevelRequirement,
+          merchantWallet.address,
+          token.address
+        )
+      ).fulfilled;
     });
   });
 

@@ -12,13 +12,18 @@ export const privateKeys = [
   '0xb2fd4d29c1390b71b8795ae81196bfd60293adf99f9d32a0aff06288fcdac55f',
 ];
 
-export function generatedWallets(provider: ethers.providers.BaseProvider): Array<ethers.Wallet> {
+export function generatedWallets(
+  provider: ethers.providers.BaseProvider
+): Array<ethers.Wallet> {
   return privateKeys.map((key: string) => {
     return new ethers.Wallet(key, provider);
   });
 }
 
-export async function signMessage(message: string, wallet: ethers.Wallet): Promise<Uint8Array>{
+export async function signMessage(
+  message: string,
+  wallet: ethers.Wallet
+): Promise<Uint8Array> {
   const messageHash = ethers.utils.id(message);
   const messageHashBytes = ethers.utils.arrayify(messageHash);
   const flatSig = await wallet.signMessage(messageHashBytes);

@@ -3,9 +3,11 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import { Wallet } from '@ethersproject/wallet';
 import { InventoryFactory } from '../typechain/InventoryFactory';
 import { MarketFactory } from '../typechain/MarketFactory';
+import { config as dotenv } from 'dotenv';
+import minimist from 'minimist';
 
 async function start() {
-  const args = require('minimist')(process.argv.slice(2));
+  const args = minimist(process.argv.slice(2));
 
   if (!args.chainId) {
     throw new Error('--chainId chain ID is required');
@@ -13,11 +15,10 @@ async function start() {
   const path = `${process.cwd()}/.env${
     args.chainId === 1 ? '.prod' : args.chainId === 4 ? '.dev' : '.local'
   }`;
-  await require('dotenv').config({ path });
+  await dotenv({ path });
   const provider = new JsonRpcProvider(process.env.RPC_ENDPOINT);
   const wallet = new Wallet(`0x${process.env.PRIVATE_KEY}`, provider);
   const sharedAddressPath = `${process.cwd()}/addresses/${args.chainId}.json`;
-  // @ts-ignore
   const addressBook = JSON.parse(await fs.readFileSync(sharedAddressPath));
   if (addressBook.market) {
     throw new Error(

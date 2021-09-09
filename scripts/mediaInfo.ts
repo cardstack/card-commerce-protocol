@@ -2,9 +2,11 @@ import fs from 'fs-extra';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Wallet } from '@ethersproject/wallet';
 import { InventoryFactory } from '../typechain/InventoryFactory';
+import minimist from 'minimist';
+import { config as dotenv } from 'dotenv';
 
 async function start() {
-  const args = require('minimist')(process.argv.slice(2), {
+  const args = minimist(process.argv.slice(2), {
     string: ['tokenURI', 'metadataURI', 'contentHash', 'metadataHash'],
   });
 
@@ -17,11 +19,10 @@ async function start() {
   const path = `${process.cwd()}/.env${
     args.chainId === 1 ? '.prod' : args.chainId === 4 ? '.dev' : '.local'
   }`;
-  await require('dotenv').config({ path });
+  await dotenv.config({ path });
   const provider = new JsonRpcProvider(process.env.RPC_ENDPOINT);
   const wallet = new Wallet(`0x${process.env.PRIVATE_KEY}`, provider);
   const sharedAddressPath = `${process.cwd()}/addresses/${args.chainId}.json`;
-  // @ts-ignore
   const addressBook = JSON.parse(await fs.readFileSync(sharedAddressPath));
   if (!addressBook.media) {
     throw new Error(`Media contract has not yet been deployed`);

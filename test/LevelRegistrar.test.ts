@@ -220,12 +220,11 @@ describe('Level Registrar', () => {
 
   describe('#crossLevels', () => {
     let levelRegistrarContract: LevelRegistrar;
-    let erc20: BaseErc20;
 
     beforeEach(async () => {
       await deploy();
       levelRegistrarContract = await registrarAs(deployerWallet);
-      erc20 = await createERC20();
+      await createERC20();
     });
 
     it('Should be able set and get a cross level', async () => {

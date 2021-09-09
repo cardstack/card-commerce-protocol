@@ -20,13 +20,7 @@ import {
   toNumWei,
 } from './utils';
 import { arrayify, formatBytes32String, sha256 } from 'ethers/lib/utils';
-import exp from 'constants';
-import { BytesLike } from '@ethersproject/bytes';
-import {
-  ExchangeMock,
-  ExchangeMockFactory,
-  LevelRegistrarFactory,
-} from '../typechain';
+import { ExchangeMockFactory, LevelRegistrarFactory } from '../typechain';
 
 chai.use(asPromised);
 
@@ -76,7 +70,6 @@ describe('Inventory', () => {
     nonBidderWallet,
   ] = generatedWallets(provider);
 
-  const defaultTokenId = 1;
   const defaultAsk = {
     amount: 100,
   };
@@ -180,10 +173,6 @@ describe('Inventory', () => {
 
   async function removeBid(token: Inventory, tokenId: number) {
     return token.removeBid(tokenId);
-  }
-
-  async function acceptBid(token: Inventory, tokenId: number, bid: Bid) {
-    return token.acceptBid(tokenId, bid);
   }
 
   async function setItems(
@@ -558,7 +547,6 @@ describe('Inventory', () => {
       );
       await setAsk(token, 0, defaultAsk);
       const block = await provider.getBlockNumber();
-      const tx = await removeAsk(token, 0);
 
       const events = await auction.queryFilter(
         auction.filters.AskRemoved(0, null),

@@ -1,16 +1,13 @@
 import { BaseErc20Factory, InventoryFactory } from '../typechain';
 import { BigNumberish, Wallet } from 'ethers';
 import { MaxUint256 } from '@ethersproject/constants';
-import { generatedWallets } from '../utils/generatedWallets';
-import { JsonRpcProvider } from '@ethersproject/providers';
 import { formatUnits } from '@ethersproject/units';
 import { signTypedData } from 'eth-sig-util';
 import { fromRpcSig } from 'ethereumjs-util';
-
-const provider = new JsonRpcProvider();
-const [deployerWallet] = generatedWallets(provider);
+import { ethers } from 'hardhat';
 
 export async function deployCurrency(): Promise<string> {
+  const [deployerWallet] = await ethers.getSigners();
   const currency = await new BaseErc20Factory(deployerWallet).deploy(
     'test',
     'TEST',
@@ -24,6 +21,7 @@ export async function mintCurrency(
   to: string,
   value: number
 ): Promise<void> {
+  const [deployerWallet] = await ethers.getSigners();
   await BaseErc20Factory.connect(currency, deployerWallet).mint(to, value);
 }
 
@@ -38,6 +36,7 @@ export async function getBalance(
   currency: string,
   owner: string
 ): Promise<BigNumberish> {
+  const [deployerWallet] = await ethers.getSigners();
   return BaseErc20Factory.connect(currency, deployerWallet).balanceOf(owner);
 }
 

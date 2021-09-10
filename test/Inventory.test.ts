@@ -1,10 +1,9 @@
 import chai, { expect } from 'chai';
 import asPromised from 'chai-as-promised';
-import { JsonRpcProvider } from '@ethersproject/providers';
 import { Blockchain } from '../utils/Blockchain';
-import { generatedWallets } from '../utils/generatedWallets';
 import { MarketFactory } from '../typechain/MarketFactory';
-import { ethers, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
+import { waffle, ethers } from 'hardhat';
 import { AddressZero } from '@ethersproject/constants';
 import { BigNumberish, Bytes } from 'ethers';
 import { InventoryFactory } from '../typechain/InventoryFactory';
@@ -24,7 +23,7 @@ import { ExchangeMockFactory, LevelRegistrarFactory } from '../typechain';
 
 chai.use(asPromised);
 
-const provider = new JsonRpcProvider();
+const provider = waffle.provider;
 const blockchain = new Blockchain(provider);
 
 let contentHex: string;
@@ -60,15 +59,13 @@ type Bid = {
 };
 
 describe('Inventory', () => {
-  const [
-    deployerWallet,
+  let deployerWallet,
     bidderWallet,
     merchantWallet,
     ownerWallet,
     prevOwnerWallet,
     otherWallet,
-    nonBidderWallet,
-  ] = generatedWallets(provider);
+    nonBidderWallet;
 
   const defaultAsk = {
     amount: 100,
@@ -248,6 +245,16 @@ describe('Inventory', () => {
   }
 
   beforeEach(async () => {
+    [
+      deployerWallet,
+      bidderWallet,
+      merchantWallet,
+      ownerWallet,
+      prevOwnerWallet,
+      otherWallet,
+      nonBidderWallet,
+    ] = await ethers.getSigners();
+
     await blockchain.resetAsync();
 
     metadataHex = ethers.utils.formatBytes32String('{}');
@@ -864,19 +871,23 @@ describe('Inventory', () => {
   });
 
   describe('#setDiscount', async () => {
-    const defaultLevelRequirement = {
-      setter: merchantWallet.address,
-      registrar: undefined,
-      token: undefined,
-      levelLabel: 'noob',
-    };
+    let defaultLevelRequirement;
 
-    const defaultDiscount = {
-      levelRequired: defaultLevelRequirement,
-      discount: { value: 1 },
-    };
+    let defaultDiscount;
 
     beforeEach(async () => {
+      defaultLevelRequirement = {
+        setter: merchantWallet.address,
+        registrar: undefined,
+        token: undefined,
+        levelLabel: 'noob',
+      };
+
+      defaultDiscount = {
+        levelRequired: defaultLevelRequirement,
+        discount: { value: 1 },
+      };
+
       await deploy();
       defaultLevelRequirement.token = tokenAddress;
       defaultLevelRequirement.registrar = registarAddress;
@@ -950,14 +961,15 @@ describe('Inventory', () => {
   });
 
   describe('#setLevelRequirements', () => {
-    const defaultLevelRequirement = {
-      setter: deployerWallet.address,
-      registrar: undefined,
-      token: undefined,
-      levelLabel: 'noob',
-    };
+    let defaultLevelRequirement;
 
     beforeEach(async () => {
+      defaultLevelRequirement = {
+        setter: deployerWallet.address,
+        registrar: undefined,
+        token: undefined,
+        levelLabel: 'noob',
+      };
       await deploy();
       await mint(
         await tokenAs(merchantWallet),

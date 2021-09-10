@@ -1,15 +1,12 @@
 import chai, { expect } from 'chai';
 import asPromised from 'chai-as-promised';
-import { JsonRpcProvider } from '@ethersproject/providers';
-import { generatedWallets } from '../utils/generatedWallets';
 import { BaseErc20Factory } from '../typechain/BaseErc20Factory';
 import { LevelRegistrar } from '../typechain/LevelRegistrar';
 import { BaseErc20, LevelRegistrarFactory } from '../typechain';
 import { Wallet } from 'ethers';
+import { ethers } from 'hardhat';
 
 chai.use(asPromised);
-
-const provider = new JsonRpcProvider();
 
 type Level = {
   label: string;
@@ -24,7 +21,7 @@ type CrossLevel = {
 };
 
 describe('Level Registrar', () => {
-  const [deployerWallet, otherWallet] = generatedWallets(provider);
+  let deployerWallet, otherWallet;
 
   const defaultLevel: Level = {
     label: 'noob',
@@ -36,14 +33,19 @@ describe('Level Registrar', () => {
     threshold: 100,
   };
 
-  const defaultCrossLevel: CrossLevel = {
-    globalLevelLabel: 'Star alliance gold',
-    recognisedLevelsByLabel: ['Air NZ premium', 'United Gold'],
-    setters: [deployerWallet.address, otherWallet.address],
-    tokens: [deployerWallet.address, otherWallet.address],
-  };
+  let defaultCrossLevel: CrossLevel;
 
   let levelRegistrarAddress: string;
+
+  beforeEach(async function () {
+    [deployerWallet, otherWallet] = await ethers.getSigners();
+    defaultCrossLevel = {
+      globalLevelLabel: 'Star alliance gold',
+      recognisedLevelsByLabel: ['Air NZ premium', 'United Gold'],
+      setters: [deployerWallet.address, otherWallet.address],
+      tokens: [deployerWallet.address, otherWallet.address],
+    };
+  });
 
   async function deploy() {
     const levelRegistrar = await (

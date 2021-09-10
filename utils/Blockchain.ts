@@ -1,10 +1,10 @@
-import { providers } from 'ethers';
+import { MockProvider } from 'ethereum-waffle';
 
 export class Blockchain {
-  private _snapshotId: number | undefined;
-  private _provider: providers.JsonRpcProvider;
+  private _snapshotId: number;
+  private _provider: MockProvider;
 
-  constructor(provider: providers.JsonRpcProvider) {
+  constructor(provider: MockProvider) {
     this._provider = provider;
   }
 

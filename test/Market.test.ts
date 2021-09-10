@@ -1,8 +1,6 @@
 import chai, { expect } from 'chai';
 import asPromised from 'chai-as-promised';
-import { JsonRpcProvider } from '@ethersproject/providers';
 import { Blockchain } from '../utils/Blockchain';
-import { generatedWallets } from '../utils/generatedWallets';
 import { MarketFactory } from '../typechain/MarketFactory';
 import { BigNumberish, Wallet } from 'ethers';
 import { formatUnits } from '@ethersproject/units';
@@ -12,10 +10,11 @@ import { Market } from '../typechain/Market';
 import { ExchangeMockFactory } from '../typechain/ExchangeMockFactory';
 import { LevelRegistrarFactory } from '../typechain';
 import Decimal from '../utils/Decimal';
+import { ethers, waffle } from 'hardhat';
 
 chai.use(asPromised);
 
-const provider = new JsonRpcProvider();
+const provider = waffle.provider;
 const blockchain = new Blockchain(provider);
 
 type Ask = {
@@ -49,24 +48,14 @@ type LevelRequirement = {
 };
 
 describe('Market', () => {
-  const [
-    deployerWallet,
-    bidderWallet,
-    mockTokenWallet,
-    otherWallet,
-  ] = generatedWallets(provider);
+  let deployerWallet, bidderWallet, mockTokenWallet, otherWallet;
 
   const defaultTokenId = 1;
   const defaultAsk = {
     amount: 100,
   };
 
-  const defaultLevelRequirement: LevelRequirement = {
-    setter: deployerWallet.address,
-    registrar: mockTokenWallet.address,
-    token: mockTokenWallet.address,
-    levelLabel: 'noob',
-  };
+  let defaultLevelRequirement: LevelRequirement;
 
   const defaultDiscount: Discount = {
     levelRequired: null,
@@ -170,6 +159,20 @@ describe('Market', () => {
   }
 
   beforeEach(async () => {
+    [
+      deployerWallet,
+      bidderWallet,
+      mockTokenWallet,
+      otherWallet,
+    ] = await ethers.getSigners();
+
+    defaultLevelRequirement = {
+      setter: deployerWallet.address,
+      registrar: mockTokenWallet.address,
+      token: mockTokenWallet.address,
+      levelLabel: 'noob',
+    };
+
     await blockchain.resetAsync();
   });
 
@@ -210,16 +213,17 @@ describe('Market', () => {
   });
 
   describe('#setItems', () => {
-    const defaultItems: Items = {
-      merchant: deployerWallet.address,
-      tokenAddresses: [],
-      amounts: [1000],
-      quantity: 10,
-    };
+    let defaultItems: Items;
 
     let currency;
 
     beforeEach(async () => {
+      defaultItems = {
+        merchant: deployerWallet.address,
+        tokenAddresses: [],
+        amounts: [1000],
+        quantity: 10,
+      };
       await deploy();
       await configure();
       currency = await deployCurrency();

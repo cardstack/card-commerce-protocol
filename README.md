@@ -4,23 +4,7 @@
 
 CardPay is a social commerce platform that leverages EVM based blockchains to provide a marketplace for merchants and buyers to purchase digital items using cryptocurrency and fiat.
 
-## Getting started
-
-### install dependencies
-
-`$ yarn`
-
-### compile the contracts
-
-`$ yarn build`
-
-### run a local blockchain (required for testing)
-
-`$ yarn chain`
-
-### run tests
-
-`$ yarn test`
+These contracts are consumed and tested in the card-protocol-xdai repo
 
 ## Contracts
 

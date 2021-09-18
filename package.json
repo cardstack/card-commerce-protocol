@@ -5,6 +5,8 @@
   "license": "GPL-3.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "dependencies": {},
+  "dependencies": {
+    "@openzeppelin/contracts": "3.2.0"
+  },
   "devDependencies": {}
 }

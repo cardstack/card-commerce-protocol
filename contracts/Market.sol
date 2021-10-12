@@ -3,6 +3,8 @@
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -17,7 +19,7 @@ import {IExchange} from "./interfaces/IExchange.sol";
  * @title A Market for pieces of media
  * @notice This contract contains all of the market logic for Media
  */
-contract Market is IMarket {
+contract Market is IMarket, Initializable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -92,7 +94,7 @@ contract Market is IMarket {
      * ****************
      */
 
-    constructor() public {
+    function initialize() initializer public {
         _owner = msg.sender;
     }
 

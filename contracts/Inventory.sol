@@ -5,6 +5,8 @@ import {
     ReentrancyGuardUpgradeable
 } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import {ERC721Burnable} from "./ERC721Burnable.sol";
 import {ERC721} from "./ERC721.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/EnumerableSet.sol";
@@ -21,7 +23,7 @@ import "./interfaces/IInventory.sol";
  * @notice This contract provides an interface to mint media with a market
  * owned by the creator.
  */
-contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable {
+contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
@@ -155,6 +157,8 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable {
      */
     function initialize(address marketContractAddr) initializer public {
         __ERC721_init("CardPay Inventory", "CPI");
+        __Ownable_init();
+
         marketContract = marketContractAddr;
         _registerInterface(_INTERFACE_ID_ERC721_METADATA);
     }

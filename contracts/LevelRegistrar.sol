@@ -3,10 +3,15 @@ pragma experimental ABIEncoderV2;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ILevelRegistrar.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract LevelRegistrar is ILevelRegistrar {
+contract LevelRegistrar is ILevelRegistrar, OwnableUpgradeable {
     mapping(address => mapping(address => Level[])) public levels; // setter => token address => Level[]
     mapping(address => CrossLevel[]) public crossLevels;
+
+    function initialize() initializer public {
+      __Ownable_init();
+    }
 
     function setCrossLevel(CrossLevel[] memory crossLevelsToSet)
         public

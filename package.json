@@ -6,7 +6,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@openzeppelin/contracts": "3.2.0"
+    "@openzeppelin/contracts": "3.2.0",
+    "@openzeppelin/contracts-upgradeable": "3.2.0"
   },
   "devDependencies": {}
 }

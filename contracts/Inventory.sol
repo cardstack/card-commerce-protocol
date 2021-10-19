@@ -1,16 +1,19 @@
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
+import {
+    ReentrancyGuardUpgradeable
+} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import {ERC721Burnable} from "./ERC721Burnable.sol";
 import {ERC721} from "./ERC721.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {Math} from "@openzeppelin/contracts/math/Math.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {
-    ReentrancyGuard
-} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+// import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import {Decimal} from "./Decimal.sol";
 import {IMarket} from "./interfaces/IMarket.sol";
 import "./interfaces/IInventory.sol";
@@ -20,7 +23,7 @@ import "./interfaces/IInventory.sol";
  * @notice This contract provides an interface to mint media with a market
  * owned by the creator.
  */
-contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
+contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, OwnableUpgradeable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
@@ -152,10 +155,10 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuard {
      * @notice On deployment, set the market contract address and register the
      * ERC721 metadata interface
      */
-    constructor(address marketContractAddr)
-        public
-        ERC721("CardPay Inventory", "CPI")
-    {
+    function initialize(address marketContractAddr) initializer public {
+        __ERC721_init("CardPay Inventory", "CPI");
+        __Ownable_init();
+
         marketContract = marketContractAddr;
         _registerInterface(_INTERFACE_ID_ERC721_METADATA);
     }

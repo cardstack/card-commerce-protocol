@@ -3,6 +3,8 @@
 pragma solidity 0.6.8;
 pragma experimental ABIEncoderV2;
 
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -17,7 +19,7 @@ import {IExchange} from "./interfaces/IExchange.sol";
  * @title A Market for pieces of media
  * @notice This contract contains all of the market logic for Media
  */
-contract Market is IMarket {
+contract Market is IMarket, OwnableUpgradeable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -30,9 +32,6 @@ contract Market is IMarket {
 
     // Address for the SPEND conversion contract
     address public exchangeSPENDContract;
-
-    // Deployment Address
-    address private _owner;
 
     // Mapping from token to mapping from bidder to bid
     mapping(uint256 => mapping(address => Bid)) private _tokenBidders;
@@ -91,9 +90,8 @@ contract Market is IMarket {
      * Public Functions
      * ****************
      */
-
-    constructor() public {
-        _owner = msg.sender;
+    function initialize() initializer public {
+      __Ownable_init();
     }
 
     /**
@@ -103,8 +101,7 @@ contract Market is IMarket {
     function configure(
         address inventoryContractAddress,
         address exchangeSPENDAddr
-    ) external override {
-        require(msg.sender == _owner, "Market: Only owner");
+    ) external override onlyOwner {
         require(inventoryContract == address(0), "Market: Already configured");
         require(
             inventoryContractAddress != address(0),

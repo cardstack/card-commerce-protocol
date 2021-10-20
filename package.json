@@ -5,7 +5,7 @@
   "license": "GPL-3.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "dependencies": {
+  "peerDependencies": {
     "@openzeppelin/contracts": "3.2.0",
     "@openzeppelin/contracts-upgradeable": "3.2.0"
   },

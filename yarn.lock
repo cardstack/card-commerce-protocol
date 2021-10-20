@@ -2,12 +2,3 @@
 # yarn lockfile v1
 
 
-"@openzeppelin/contracts-upgradeable@3.2.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-3.2.0.tgz#fb6959659e7585f419060ea1c546c0c11f1d0582"
-  integrity sha512-f2q4FjT84ixIl8MUo9WbCMSBtV9T52c8QbrCfzoCBbDwEuVjf9jnvm1JETAWSC9Q9oLcUXpRFBMavb1B23tx1g==
-
-"@openzeppelin/contracts@3.2.0":
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-3.2.0.tgz#3e6b3a7662d8ed64271ade96ef42655db983fd9d"
-  integrity sha512-bUOmkSoPkjnUyMiKo6RYnb0VHBk5D9KKDAgNLzF41aqAM3TeE0yGdFF5dVRcV60pZdJLlyFT/jjXIZCWyyEzAQ==

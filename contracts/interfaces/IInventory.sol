@@ -20,15 +20,15 @@ interface IInventory {
         // A valid URI of the content represented by this token
         string listingURI;
         // A valid URI of the metadata associated with this token
-        string metadataURI;
+        string metadataDID;
         // A SHA256 hash of the content pointed to by tokenURI
         bytes32 contentHash;
-        // A SHA256 hash of the content pointed to by metadataURI
+        // A SHA256 hash of the content pointed to by metadataDID
         bytes32 metadataHash;
     }
 
     event TokenURIUpdated(uint256 indexed _tokenId, address owner, string _uri);
-    event TokenMetadataURIUpdated(
+    event TokenMetadataDIDUpdated(
         uint256 indexed _tokenId,
         address owner,
         string _uri
@@ -37,7 +37,7 @@ interface IInventory {
     /**
      * @notice Return the metadata URI for a piece of media given the token URI
      */
-    function tokenMetadataURI(uint256 tokenId)
+    function tokenMetadataDID(uint256 tokenId)
         external
         view
         returns (string memory);
@@ -118,9 +118,9 @@ interface IInventory {
     /**
      * @notice Update the token metadata uri
      */
-    function updateTokenMetadataURI(
+    function updateTokenMetadataDID(
         uint256 tokenId,
-        string calldata metadataURI
+        string calldata metadataDID
     ) external;
 
     /**

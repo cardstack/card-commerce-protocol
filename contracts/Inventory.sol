@@ -50,8 +50,8 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
     // Mapping from token id to sha256 hash of metadata
     mapping(uint256 => bytes32) public tokenMetadataHashes;
 
-    // Mapping from token id to metadataURI
-    mapping(uint256 => string) private _tokenMetadataURIs;
+    // Mapping from token id to metadataDID
+    mapping(uint256 => string) private _tokenMetadataDIDs;
 
     // Mapping from contentHash to bool
     mapping(bytes32 => bool) private _contentHashes;
@@ -74,7 +74,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
      *     bytes4(keccak256('name()')) == 0x06fdde03
      *     bytes4(keccak256('symbol()')) == 0x95d89b41
      *     bytes4(keccak256('tokenURI(uint256)')) == 0xc87b56dd
-     *     bytes4(keccak256('tokenMetadataURI(uint256)')) == 0x157c3df9
+     *     bytes4(keccak256('tokenMetadataDID(uint256)')) == 0x157c3df9
      *
      *     => 0x06fdde03 ^ 0x95d89b41 ^ 0xc87b56dd ^ 0x157c3df9 == 0x4e222e66
      */
@@ -191,14 +191,14 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
      * @notice Return the metadata URI for a piece of media given the token URI
      * @return the metadata URI for the token
      */
-    function tokenMetadataURI(uint256 tokenId)
+    function tokenMetadataDID(uint256 tokenId)
         external
         view
         override
         onlyTokenCreated(tokenId)
         returns (string memory)
     {
-        return _tokenMetadataURIs[tokenId];
+        return _tokenMetadataDIDs[tokenId];
     }
 
     /* ****************
@@ -438,19 +438,19 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
      * @notice see IInventory
      * @dev only callable by approved or owner
      */
-    function updateTokenMetadataURI(
+    function updateTokenMetadataDID(
         uint256 tokenId,
-        string calldata metadataURI
+        string calldata metadataDID
     )
         external
         override
         nonReentrant
         onlyApprovedOrOwner(msg.sender, tokenId)
         onlyTokenWithMetadataHash(tokenId)
-        onlyValidURI(metadataURI)
+        onlyValidURI(metadataDID)
     {
-        _setTokenMetadataURI(tokenId, metadataURI);
-        emit TokenMetadataURIUpdated(tokenId, msg.sender, metadataURI);
+        _setTokenMetadataDID(tokenId, metadataDID);
+        emit TokenMetadataDIDUpdated(tokenId, msg.sender, metadataDID);
     }
 
     /**
@@ -521,7 +521,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
     function _mintForCreator(address creator, InventoryData memory data)
         internal
         onlyValidURI(data.listingURI)
-        onlyValidURI(data.metadataURI)
+        onlyValidURI(data.metadataDID)
     {
         require(
             data.contentHash != 0,
@@ -542,7 +542,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
         _tokenIdTracker.increment();
         _setTokenContentHash(tokenId, data.contentHash);
         _setTokenMetadataHash(tokenId, data.metadataHash);
-        _setTokenMetadataURI(tokenId, data.metadataURI);
+        _setTokenMetadataDID(tokenId, data.metadataDID);
         _setTokenURI(tokenId, data.listingURI);
         _listingIds[creator].add(tokenId);
         _contentHashes[data.contentHash] = true;
@@ -567,12 +567,12 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
         tokenMetadataHashes[tokenId] = metadataHash;
     }
 
-    function _setTokenMetadataURI(uint256 tokenId, string memory metadataURI)
+    function _setTokenMetadataDID(uint256 tokenId, string memory metadataDID)
         internal
         virtual
         onlyExistingToken(tokenId)
     {
-        _tokenMetadataURIs[tokenId] = metadataURI;
+        _tokenMetadataDIDs[tokenId] = metadataDID;
     }
 
     /**

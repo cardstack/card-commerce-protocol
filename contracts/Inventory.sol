@@ -146,7 +146,18 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
     modifier onlyValidURI(string memory uri) {
         require(
             bytes(uri).length != 0,
-            "Inventory: specified uri must be non-empty"
+            "Inventory: specified URI must be non-empty"
+        );
+        _;
+    }
+
+    /**
+     * @notice Ensure that the provided URI is not empty
+     */
+    modifier onlyValidDID(string memory did) {
+        require(
+            bytes(did).length != 0,
+            "Inventory: specified DID must be non-empty"
         );
         _;
     }
@@ -447,7 +458,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
         nonReentrant
         onlyApprovedOrOwner(msg.sender, tokenId)
         onlyTokenWithMetadataHash(tokenId)
-        onlyValidURI(metadataDID)
+        onlyValidDID(metadataDID)
     {
         _setTokenMetadataDID(tokenId, metadataDID);
         emit TokenMetadataDIDUpdated(tokenId, msg.sender, metadataDID);
@@ -521,7 +532,7 @@ contract Inventory is IInventory, ERC721Burnable, ReentrancyGuardUpgradeable, Ow
     function _mintForCreator(address creator, InventoryData memory data)
         internal
         onlyValidURI(data.listingURI)
-        onlyValidURI(data.metadataDID)
+        onlyValidDID(data.metadataDID)
     {
         require(
             data.contentHash != 0,
